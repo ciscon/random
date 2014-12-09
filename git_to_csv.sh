@@ -1,11 +1,10 @@
 #!/bin/bash
 #output csv of git log, one line for each file/commit combination
-#dg
 
 begin_date="2012-1-29"
 end_date="2014-4-29"
 
-echo "filename,file_change_type,commit,author,date,description"
+echo "file_change_type,filename,commit,author,date,description"
 
 gitcsv=$(git log --before=$end_date --after=$begin_date --no-merges --name-status --pretty=format:'%H,%an,%ad,"%s"'|tr '\t' ',')
 
