@@ -4,7 +4,6 @@
 
 #which interface to poll
 interface=${1-eth0}
-host=${2-localhost}
 
 tempfile=/tmp/check_bw_${interface}
 
