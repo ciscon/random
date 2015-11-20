@@ -2,19 +2,10 @@
 #live backup of lvm backed vms
 
 backup_mountpoint="/mnt/ssnas1"
+lvpath="/dev/vmvg1"
 
 #lvs of vms to backup
-lvs="buildbox2-root
-cdh5
-oracle-root
-demo-root
-activedirectory
-sharepoint
-sharepoint_2013
-feng_office
-qa-el7"
-
-lvpath="/dev/vmvg1"
+lvs=$(ls ${lvpath})
 
 GZIP="gzip"
 
@@ -22,7 +13,6 @@ GZIP="gzip"
 type pigz >/dev/null 2>&1 && { 
   GZIP="pigz"
 }
-
 
 
 #check that backup mountpoint is mounted
@@ -57,17 +47,27 @@ for lv in $lvs;do
   echo "backing up $lv at `date`"
   START_TIME=`date +%s`
 
-  lvcreate -L5G -s -n backup$lv $lvpath/$lv >/dev/null 2>&1
+  lvcreate -L10G -s -n backup$lv $lvpath/$lv >/dev/null 2>&1
   if [ $? -ne 0 ];then
     echo "creation of snapshot failed, exiting."
     exit 2
   fi
-  
+
+  sync
+
+  if [ -e ${backup_mountpoint}/$(hostname)/${lv}.last.1.gz ];then
+    mv -f ${backup_mountpoint}/$(hostname)/${lv}.last.1.gz ${backup_mountpoint}/$(hostname)/${lv}.last.2.gz >/dev/null 2>&1
+  fi
+
+  if [ -e ${backup_mountpoint}/$(hostname)/${lv}.last.gz ];then
+    mv -f ${backup_mountpoint}/$(hostname)/${lv}.last.gz ${backup_mountpoint}/$(hostname)/${lv}.last.1.gz >/dev/null 2>&1
+  fi
+ 
   if [ -e ${backup_mountpoint}/$(hostname)/${lv}.gz ];then
     mv -f ${backup_mountpoint}/$(hostname)/${lv}.gz ${backup_mountpoint}/$(hostname)/${lv}.last.gz >/dev/null 2>&1
   fi
 
-  nice ionice -n2 dd if=$lvpath/backup$lv bs=8M iflag=direct |$GZIP -1 > ${backup_mountpoint}/$(hostname)/${lv}.gz
+  nice ionice -n2 dd if=$lvpath/backup$lv bs=16M iflag=direct |$GZIP -1 > ${backup_mountpoint}/$(hostname)/${lv}.gz
 
   if [ $? -ne 0 ];then
     echo "backup of $lv failed, exiting."
