@@ -1,0 +1,41 @@
+#!/bin/bash
+#restore of lvm backed vms
+
+backup_mountpoint="/mnt/ssnas1"
+
+#lvs of vms to restore
+lvs=$(ls ${lvpath})
+
+lvpath="/dev/vmvg1"
+
+GZIP="unpigz"
+
+if [ `which pv >/dev/null;echo $?` -eq 0 ];then
+  PV="pv -pr"
+else
+  PV="cat"
+fi
+
+
+#check that backup mountpoint is mounted
+mountpoint -q ${backup_mountpoint}||mount ${backup_mountpoint} >/dev/null 2>&1
+mountpoint -q ${backup_mountpoint} >/dev/null 2>&1
+
+if [ $? -ne 0 ];then
+  echo "ssnas1 not mounted, exiting."
+  exit 1
+fi
+
+for lv in $lvs;do
+
+  echo -en "\nrestoring ${backup_mountpoint}/$(hostname)/${lv}.gz to $lvpath/$lv\n"
+  nice ionice -n2 $PV ${backup_mountpoint}/$(hostname)/${lv}.gz|nice $GZIP -c -|dd of=$lvpath/$lv bs=8M iflag=fullblock oflag=direct
+
+  if [ $? -ne 0 ];then
+    echo "restore of $lv failed, exiting."
+    exit 3
+  fi
+
+  echo -e "restore of $lv complete\n"
+
+done

@@ -47,7 +47,7 @@ for lv in $lvs;do
   echo "backing up $lv at `date`"
   START_TIME=`date +%s`
 
-  lvcreate -L10G -s -n backup$lv $lvpath/$lv >/dev/null 2>&1
+  lvcreate -L20G -s -n backup$lv $lvpath/$lv >/dev/null 2>&1
   if [ $? -ne 0 ];then
     echo "creation of snapshot failed, exiting."
     exit 2
@@ -67,7 +67,7 @@ for lv in $lvs;do
     mv -f ${backup_mountpoint}/$(hostname)/${lv}.gz ${backup_mountpoint}/$(hostname)/${lv}.last.gz >/dev/null 2>&1
   fi
 
-  nice ionice -n2 dd if=$lvpath/backup$lv bs=16M iflag=direct |$GZIP -1 > ${backup_mountpoint}/$(hostname)/${lv}.gz
+  nice ionice -n2 dd if=$lvpath/backup$lv bs=8M iflag=direct |$GZIP -1 > ${backup_mountpoint}/$(hostname)/${lv}.gz
 
   if [ $? -ne 0 ];then
     echo "backup of $lv failed, exiting."
