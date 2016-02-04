@@ -67,7 +67,7 @@ for lv in $lvs;do
     mv -f ${backup_mountpoint}/$(hostname)/${lv}.gz ${backup_mountpoint}/$(hostname)/${lv}.last.gz >/dev/null 2>&1
   fi
 
-  nice ionice -n2 dd if=$lvpath/backup$lv bs=8M iflag=direct |$GZIP -1 > ${backup_mountpoint}/$(hostname)/${lv}.gz
+  nice ionice -n2 dd if=$lvpath/backup$lv bs=2M|$GZIP -1 > ${backup_mountpoint}/$(hostname)/${lv}.gz
 
   if [ $? -ne 0 ];then
     echo "backup of $lv failed, exiting."

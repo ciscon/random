@@ -11,7 +11,7 @@ lvpath="/dev/vmvg1"
 GZIP="unpigz"
 
 if [ `which pv >/dev/null;echo $?` -eq 0 ];then
-  PV="pv -pr"
+  PV="pv"
 else
   PV="cat"
 fi
@@ -29,7 +29,7 @@ fi
 for lv in $lvs;do
 
   echo -en "\nrestoring ${backup_mountpoint}/$(hostname)/${lv}.gz to $lvpath/$lv\n"
-  nice ionice -n2 $PV ${backup_mountpoint}/$(hostname)/${lv}.gz|nice $GZIP -c -|dd of=$lvpath/$lv bs=8M iflag=fullblock oflag=direct
+  nice ionice -n2 $PV ${backup_mountpoint}/$(hostname)/${lv}.gz|nice $GZIP -c -|dd of=$lvpath/$lv bs=2M iflag=fullblock 
 
   if [ $? -ne 0 ];then
     echo "restore of $lv failed, exiting."
