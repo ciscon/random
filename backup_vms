@@ -1,19 +1,19 @@
 #!/bin/bash
-#live backup of lvm backed vms
+#live backup of lvm backed vms using borg
+#
+##restoration command
+#borg extract --stdout ${backup_mountpoint}/${backupdir}::LVM-DATE LVM > ${lvpath}/LVM
+
 
 backup_mountpoint="/mnt/ssnas1"
 lvpath="/dev/vmvg1"
+backupdir="vm_backup"
+
+#make sure ls isn't polluted
+unalias ls >/dev/null 2>&1
 
 #lvs of vms to backup
 lvs=$(ls ${lvpath})
-
-GZIP="gzip"
-
-#check if pigz exists
-type pigz >/dev/null 2>&1 && { 
-  GZIP="pigz"
-}
-
 
 #check that backup mountpoint is mounted
 mountpoint -q ${backup_mountpoint}||mount ${backup_mountpoint} >/dev/null 2>&1
@@ -25,63 +25,48 @@ if [ $? -ne 0 ];then
 fi
 
 #create backup directory if it does not exist
-mkdir -p ${backup_mountpoint}/$(hostname) >/dev/null 2>&1
+if [ ! -d ${backup_mountpoint}/${backupdir} ];then
+  borg init -e none ${backup_mountpoint}/${backupdir} >/dev/null 2>&1
+fi
 
-
-function displaytime() {
-  local T=$1
-  local D=$((T/60/60/24))
-  local H=$((T/60/60%24))
-  local M=$((T/60%60))
-  local S=$((T%60))
-  [[ $D > 0 ]] && printf '%d days ' $D
-  [[ $H > 0 ]] && printf '%d hours ' $H
-  [[ $M > 0 ]] && printf '%d minutes ' $M
-  [[ $D > 0 || $H > 0 || $M > 0 ]] && printf 'and '
-  printf '%d seconds\n' $S
-}
+#backup lvm configuration
+echo "backing up lv information"
+lvdisplay > /tmp/lvdisplay.txt
+borg create ${backup_mountpoint}/${backupdir}::lvdisplay-`date +%Y-%m-%d` /tmp/lvdisplay.txt
 
 #do actual backups
 for lv in $lvs;do
 
   echo "backing up $lv at `date`"
-  START_TIME=`date +%s`
-
   lvcreate -L20G -s -n backup$lv $lvpath/$lv >/dev/null 2>&1
   if [ $? -ne 0 ];then
     echo "creation of snapshot failed, exiting."
+    lvremove $lvpath/backup$lv -f >/dev/null 2>&1
     exit 2
   fi
 
   sync
 
-  if [ -e ${backup_mountpoint}/$(hostname)/${lv}.last.1.gz ];then
-    mv -f ${backup_mountpoint}/$(hostname)/${lv}.last.1.gz ${backup_mountpoint}/$(hostname)/${lv}.last.2.gz >/dev/null 2>&1
-  fi
+#fast compression, large chunks
+nice ionice -n 2 borg create --compression lz4 --chunker-params 19,23,21,4095 --read-special -v --stats ${backup_mountpoint}/${backupdir}::${lv}-`date +%Y-%m-%d` $lvpath/backup$lv
 
-  if [ -e ${backup_mountpoint}/$(hostname)/${lv}.last.gz ];then
-    mv -f ${backup_mountpoint}/$(hostname)/${lv}.last.gz ${backup_mountpoint}/$(hostname)/${lv}.last.1.gz >/dev/null 2>&1
-  fi
- 
-  if [ -e ${backup_mountpoint}/$(hostname)/${lv}.gz ];then
-    mv -f ${backup_mountpoint}/$(hostname)/${lv}.gz ${backup_mountpoint}/$(hostname)/${lv}.last.gz >/dev/null 2>&1
-  fi
-
-  nice ionice -n2 dd if=$lvpath/backup$lv bs=2M|$GZIP -1 > ${backup_mountpoint}/$(hostname)/${lv}.gz
 
   if [ $? -ne 0 ];then
     echo "backup of $lv failed, exiting."
+    lvremove $lvpath/backup$lv -f >/dev/null 2>&1
     exit 3 
   fi
+
   lvremove $lvpath/backup$lv -f >/dev/null 2>&1
   if [ $? -ne 0 ];then
     echo "removal of snaphot failed, exiting."
     exit 4
   fi
 
-  END_TIME=`date +%s`
-  let RUN_TIME=END_TIME-START_TIME
-
-  echo -e "backup of $lv complete in $(displaytime $RUN_TIME)\n"
+  echo -e "backup of $lv complete\n"
 
 done
+
+echo "removing old archives..."
+echo "just running with --dry-run, remove this when we actually want to remove old backups"
+borg prune --dry-run --stats -v --keep-daily=7 --keep-weekly=8 ${backup_mountpoint}/${backupdir}
