@@ -1,22 +1,54 @@
 #!/bin/bash
+# run quake with libnotify notifications and bind individual threads to physical cores
 
-#nvidia: threaded opt?
-#export LD_PRELOAD="libpthread.so.0 libGL.so.1" 
-#export __GL_THREADED_OPTIMIZATIONS=1
+quake_path="/opt/quake"
+auto_args="+connectbr 192.168.2.13" #args to append if no arguments are given
+nice_level="-19"
+nvidia_threaded_optimizations="0"
+notify_command="notify-send -t 3000 -i /opt/quake/quake.png"
 
-autoconnect_host="192.168.2.13"
+#append extra arguments? example: timedemo
+#extra_args=" -nosound +s_nosound 1 +timedemo fps.qwd"
 
 if [ -z "$*" ];then
-	args="+connectbr $autoconnect_host"
+	args="$auto_args"
 else
 	args="$*"
 fi
 
-nice -n -20 /opt/quake/ezquake-linux-x86_64 "$args" -heapsize 262144&
+#nvidia: threaded opt?
+if [ $nvidia_threaded_optimizations -eq 1 ];then
+	export LD_PRELOAD="libpthread.so.0 libGL.so.1" 
+	export __GL_THREADED_OPTIMIZATIONS=1
+fi
+
+
+nice -n $nice_level "$quake_path"/ezquake-linux-x86_64 "$args" -heapsize 262144 -condebug $timedemo &
+#timedemo from console - output to qw/qconsole.log
+#nice -n -20 "$quake_path"/ezquake-linux-x86_64 -heapsize 262144 -condebug -nosound +s_nosound 1 +timedemo fps.qwd
 qpid=$!
 
-#timedemo from console - output to qw/qconsole.log
-#nice -n -20 /opt/quake/ezquake-linux-x86_64 -heapsize 262144 -condebug -nosound +s_nosound 1 +timedemo fps.qwd
+#set up notifications
+notify_whitelist='entered the game$
+éó òåáäù' #player ready
+
+notify_blacklist='^Spectator' #ignore spectators
+
+grep_command='egrep --line-buffered'
+
+OLDIFS=$IFS; IFS=$'\n';
+
+for item in $notify_whitelist;do  grep_command+=" -e '$item'";done
+
+for item in $notify_blacklist;do  grep_command+=" | grep --line-buffered -v -e '$item'";done
+
+IFS=$OLDIFS
+
+#start monitoring of logfile for notifications
+tail -n 0 -F "$quake_path"/qw/qconsole.log| eval "$grep_command" | \
+while read line; do
+        $notify_command "$line" 
+done&
 
 #allow threads to spawn
 sleep 5
@@ -41,4 +73,9 @@ if [[ $cores =~ ^[0-9]+$ ]];then
 
 fi
 
-wait
+wait $qpid
+
+#kill off our backgrounded processes
+kill -- -$$
+
+exit 0
