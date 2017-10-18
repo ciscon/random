@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 # run quake with libnotify notifications and bind individual threads to physical cores
 
 quake_path="/opt/quake"
@@ -6,6 +6,9 @@ auto_args="+connectbr 192.168.2.13" #args to append if no arguments are given
 nice_level="-19"
 nvidia_threaded_optimizations="0"
 notify_command="notify-send -t 3000 -i /opt/quake/quake.png"
+
+#kill off children when we exit
+trap 'kill $(ps -o pid= --ppid $$)' INT TERM EXIT
 
 #append extra arguments? example: timedemo
 #extra_args=" -nosound +s_nosound 1 +timedemo fps.qwd"
@@ -73,9 +76,7 @@ if [[ $cores =~ ^[0-9]+$ ]];then
 
 fi
 
-wait $qpid
 
-#kill off our backgrounded processes
-kill -- -$$
+wait $qpid
 
 exit 0
