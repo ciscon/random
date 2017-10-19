@@ -5,7 +5,7 @@ quake_path="/opt/quake"
 auto_args="+connectbr nicotinelounge.com" #args to append if no arguments are given
 nice_level="-19"
 nvidia_threaded_optimizations="0"
-notify_command="notify-send -t 3000 -i /opt/quake/quake.png"
+notify_command="notify-send -t 1500 -i /opt/quake/quake.png"
 
 #set up notifications
 notify_whitelist='entered the game$
