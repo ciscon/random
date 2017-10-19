@@ -9,8 +9,11 @@ notify_command="notify-send -t 1500 -i /opt/quake/quake.png"
 
 #set up notifications
 notify_whitelist='entered the game$
-éó òåáäù' #player ready
+M-iM-s M-rM-eM-aM-dM-y' #player ready
 notify_blacklist='^Spectator' #ignore spectators
+
+#do we need to translate any of the notifications before displaying them?
+translate_command='sed -u "s/M-iM-s M-rM-eM-aM-dM-y.*$/is ready/g"'
 
 #append extra arguments? example: timedemo
 #extra_args=" -nosound +s_nosound 1 +timedemo fps.qwd"
@@ -47,7 +50,7 @@ fi
 
 
 #spawn quake process and parse stdout for notifications
-nice -n $nice_level "$quake_path"/ezquake-linux-x86_64 "$args" -heapsize 262144 -condebug /dev/stdout $timedemo | eval "$grep_command" | xargs -I% $notify_command "%" &
+nice -n $nice_level "$quake_path"/ezquake-linux-x86_64 "$args" -heapsize 262144 -condebug /dev/stdout $timedemo | cat -v | eval "$grep_command" | eval "$translate_command" |xargs -I% $notify_command "%" &
 qpid=$!
 
 #allow threads to spawn
