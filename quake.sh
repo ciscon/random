@@ -2,41 +2,25 @@
 # run quake with libnotify notifications and bind individual threads to physical cores
 
 quake_path="/opt/quake"
-auto_args="+connectbr 192.168.2.13" #args to append if no arguments are given
+auto_args="+connectbr nicotinelounge.com" #args to append if no arguments are given
 nice_level="-19"
 nvidia_threaded_optimizations="0"
 notify_command="notify-send -t 3000 -i /opt/quake/quake.png"
 
-#kill off children when we exit
-trap 'kill $(ps -o pid= --ppid $$)' INT TERM EXIT
+#set up notifications
+notify_whitelist='entered the game$
+éó òåáäù' #player ready
+notify_blacklist='^Spectator' #ignore spectators
 
 #append extra arguments? example: timedemo
 #extra_args=" -nosound +s_nosound 1 +timedemo fps.qwd"
 
-if [ -z "$*" ];then
-	args="$auto_args"
-else
-	args="$*"
-fi
 
-#nvidia: threaded opt?
-if [ $nvidia_threaded_optimizations -eq 1 ];then
-	export LD_PRELOAD="libpthread.so.0 libGL.so.1" 
-	export __GL_THREADED_OPTIMIZATIONS=1
-fi
+#kill off children when we exit
+trap 'kill $(ps -o pid= --ppid $$)' INT TERM EXIT
 
 
-nice -n $nice_level "$quake_path"/ezquake-linux-x86_64 "$args" -heapsize 262144 -condebug $timedemo &
-#timedemo from console - output to qw/qconsole.log
-#nice -n -20 "$quake_path"/ezquake-linux-x86_64 -heapsize 262144 -condebug -nosound +s_nosound 1 +timedemo fps.qwd
-qpid=$!
-
-#set up notifications
-notify_whitelist='entered the game$
-éó òåáäù' #player ready
-
-notify_blacklist='^Spectator' #ignore spectators
-
+#parse white/blacklist for notifications
 grep_command='egrep --line-buffered'
 
 OLDIFS=$IFS; IFS=$'\n';
@@ -47,14 +31,30 @@ for item in $notify_blacklist;do  grep_command+=" | grep --line-buffered -v -e '
 
 IFS=$OLDIFS
 
-#start monitoring of logfile for notifications
-tail -n 0 -F "$quake_path"/qw/qconsole.log| eval "$grep_command" | \
-while read line; do
-        $notify_command "$line" 
-done&
+
+#nvidia: threaded opt?
+if [ $nvidia_threaded_optimizations -eq 1 ];then
+	export LD_PRELOAD="libpthread.so.0 libGL.so.1" 
+	export __GL_THREADED_OPTIMIZATIONS=1
+fi
+
+
+if [ -z "$*" ];then
+	args="$auto_args"
+else
+	args="$*"
+fi
+
+
+#spawn quake process and parse stdout for notifications
+nice -n $nice_level "$quake_path"/ezquake-linux-x86_64 "$args" -heapsize 262144 -condebug /dev/stdout $timedemo | eval "$grep_command" | xargs -I% $notify_command "%" &
+qpid=$!
 
 #allow threads to spawn
 sleep 5
+
+
+#begin thread affinity
 
 #number of physical cores
 cores=$(egrep -e "core id" -e ^physical /proc/cpuinfo|xargs -l2 echo|sort -u|wc -l)
