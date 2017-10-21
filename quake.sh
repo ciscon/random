@@ -20,6 +20,7 @@ translate_command='sed -u "s/M-iM-s M-rM-eM-aM-dM-y.*$/is ready/g"'
 
 
 #kill off children when we exit
+#trap 'sleep 1;kill -- -$$' INT TERM EXIT
 trap 'kill $(ps -o pid= --ppid $$)' INT TERM EXIT
 
 
@@ -57,28 +58,44 @@ qpid=$(pgrep ezquake-linux)
 sleep 5
 
 
-#begin thread affinity
-
 #number of physical cores
 cores=$(egrep -e "core id" -e ^physical /proc/cpuinfo|xargs -l2 echo|sort -u|wc -l)
+#number of threads spawned
+num_qthreads=$(ps --no-headers -L -o tid:1 -p ${qpid}|wc -l)
 
-#if we got a number, proceed
-if [[ $cores =~ ^[0-9]+$ ]];then
 
-	#set thread affinity - sorted based on cpu usage so our primary threads will definitely get their own cores
-	qthreads=$(ps --no-headers -mo pcpu:1,tid:1 -p ${qpid}|tail -n+2|sort -nr|cut -d" " -f2)
-	
-	#set affinity, if we run out of physical cores to pin threads to, let the system decide where they go
-	core=0
-	for thread in $qthreads;do
-		if [ $core -lt $cores ];then
+#only attempt to set affinity if we have enough physical cores to handle all threads, otherwise do nothing
+if [ $num_qthreads -le $cores ];then
+
+	function set_affinity(){
+		#set thread affinity - sorted based on cpu usage so our primary threads will definitely get their own cores
+		qthreads=$(ps --no-headers -L -o pcpu:1,tid:1 -p ${qpid}|sort -nr|cut -d" " -f2)
+		
+		#set affinity, if we run out of physical cores to pin threads to, let the system decide where they go
+		core=0
+		for thread in $qthreads;do
 			taskset -p -c $core $thread >/dev/null 2>&1
+			let core=core+1 
+		done
+	}
+	
+	
+	#if we got a number, proceed
+	if [[ $cores =~ ^[0-9]+$ ]];then
+		if [ $cores -gt 1 ];then
+			set_affinity
+			#watch to make sure we haven't respawned the threads
+			(while [ 1 ];do
+				sleep 5
+				unique=$(ps --no-headers -L -o psr:1 -p ${qpid}|uniq -u)
+				if [ -z "$unique" ];then
+					set_affinity
+				fi
+			done)&
 		fi
-		let core=core+1 
-	done
+	fi
 
 fi
-
 
 wait $qpid
 
