@@ -51,7 +51,7 @@ fi
 
 #spawn quake process and parse stdout for notifications
 nice -n $nice_level "$quake_path"/ezquake-linux-x86_64 "$args" -heapsize 262144 -condebug /dev/stdout $timedemo | cat -v | eval "$grep_command" | eval "$translate_command" |xargs -I% $notify_command "%" &
-qpid=$!
+qpid=$(pgrep ezquake-linux)
 
 #allow threads to spawn
 sleep 5
