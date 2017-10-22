@@ -1,10 +1,13 @@
 #!/bin/bash 
 # run quake with libnotify notifications and bind individual threads to physical cores
+#
+# to monitor core usage: watch -n .5 'ps -L -o pid,tid,%cpu,comm,psr -p `pgrep ezquake-linux`'
 
 quake_path="/opt/quake"
+quake_exe="ezquake-linux-x86_64"
 auto_args="+connectbr nicotinelounge.com" #args to append if no arguments are given
 nice_level="-19"
-nvidia_threaded_optimizations="0"
+nvidia_threaded_optimizations="1"
 notify_command="notify-send -t 1500 -i /opt/quake/quake.png"
 
 #set up notifications
@@ -18,6 +21,7 @@ translate_command='sed -u "s/M-iM-s M-rM-eM-aM-dM-y.*$/is ready/g"'
 #append extra arguments? example: timedemo
 #extra_args=" -nosound +s_nosound 1 +timedemo fps.qwd"
 
+export __GL_YIELD="NOTHING" #never yield
 
 #kill off children when we exit
 #trap 'sleep 1;kill -- -$$' INT TERM EXIT
@@ -51,15 +55,21 @@ fi
 
 
 #spawn quake process and parse stdout for notifications
-nice -n $nice_level "$quake_path"/ezquake-linux-x86_64 "$args" -heapsize 262144 -condebug /dev/stdout $timedemo | cat -v | eval "$grep_command" | eval "$translate_command" |xargs -I% $notify_command "%" &
-qpid=$(pgrep ezquake-linux)
+nice -n $nice_level "$quake_path"/$quake_exe "$args" -heapsize 262144 -condebug /dev/stdout $timedemo | cat -v | eval "$grep_command" | eval "$translate_command" |xargs -I% $notify_command "%" &
+
+sleep 1
+
+qpid=$(pgrep -f $quake_exe)
 
 #allow threads to spawn
 sleep 5
 
 
-#number of physical cores
-cores=$(egrep -e "core id" -e ^physical /proc/cpuinfo|xargs -l2 echo|sort -u|wc -l)
+#use number of physical cores
+#cores=$(egrep -e "core id" -e ^physical /proc/cpuinfo|xargs -l2 echo|sort -u|wc -l)
+#or use number of hardware threads
+cores=$(egrep -e "core id" -e ^processor /proc/cpuinfo|xargs -l2 echo|sort -u|wc -l)
+
 #number of threads spawned
 num_qthreads=$(ps --no-headers -L -o tid:1 -p ${qpid}|wc -l)
 
