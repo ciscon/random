@@ -3,11 +3,14 @@
 #
 # to monitor core usage: watch -n .5 'ps -L -o pid,tid,%cpu,comm,psr -p `pgrep ezquake-linux`'
 
+#optimization parameters
+nvidia_threaded_optimizations="1" #nvidia threaded optimizations?
+bind_threads="1" #bind threads to cores?
+
 quake_path="/opt/quake"
 quake_exe="ezquake-linux-x86_64"
 auto_args="+connectbr nicotinelounge.com" #args to append if no arguments are given
 nice_level="-19"
-nvidia_threaded_optimizations="1"
 notify_command="notify-send -t 1500 -i /opt/quake/quake.png"
 
 #set up notifications
@@ -69,16 +72,15 @@ sleep 5
 
 
 #use number of physical cores
-#cores=$(egrep -e "core id" -e ^physical /proc/cpuinfo|xargs -l2 echo|sort -u|wc -l)
+physcores=$(egrep -e "core id" -e ^physical /proc/cpuinfo|xargs -l2 echo|sort -u|wc -l)
 #or use number of hardware threads
 cores=$(egrep -e "core id" -e ^processor /proc/cpuinfo|xargs -l2 echo|sort -u|wc -l)
-
 #number of threads spawned
 num_qthreads=$(ps --no-headers -L -o tid:1 -p ${qpid}|wc -l)
 
 
-#only attempt to set affinity if we have enough physical cores to handle all threads, otherwise do nothing
-if [ $num_qthreads -le $cores ];then
+#only attempt to set affinity if we have enough hardware threads to handle all threads, otherwise do nothing
+if [ $num_qthreads -le $cores ] && [ $bind_threads -eq 1 ];then
 
 	function set_affinity(){
 		#set thread affinity - sorted based on cpu usage so our primary threads will definitely get their own cores
@@ -87,8 +89,10 @@ if [ $num_qthreads -le $cores ];then
 		#set affinity, if we run out of physical cores to pin threads to, let the system decide where they go
 		core=0
 		for thread in $qthreads;do
-			taskset -p -c $core $thread >/dev/null 2>&1
-			let core=core+1 
+			if [ $core -lt $physcores ];then
+				taskset -p -c $core $thread >/dev/null 2>&1
+				let core=core+1 
+			fi
 		done
 	}
 	
