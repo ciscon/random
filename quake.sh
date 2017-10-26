@@ -23,6 +23,9 @@ translate_command='sed -u "s/M-iM-s M-rM-eM-aM-dM-y.*$/is ready/g"'
 
 export __GL_YIELD="NOTHING" #never yield
 
+#dwm
+wmname LG3D >/dev/null 2>&1
+
 #kill off children when we exit
 #trap 'sleep 1;kill -- -$$' INT TERM EXIT
 trap 'kill $(ps -o pid= --ppid $$)' INT TERM EXIT
