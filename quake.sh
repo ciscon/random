@@ -101,13 +101,18 @@ if [ $num_qthreads -le $cores ] && [ $bind_threads -eq 1 ];then
 	if [[ $cores =~ ^[0-9]+$ ]];then
 		if [ $cores -gt 1 ];then
 			set_affinity
+			sleep 1
+			orig_unique=$(ps --no-headers -L -o psr:1 -p ${qpid}|uniq -u|wc -l)
 			#watch to make sure we haven't respawned the threads
 			(while [ 1 ];do
 				sleep 5
-				unique=$(ps --no-headers -L -o psr:1 -p ${qpid}|uniq -u)
-				if [ -z "$unique" ];then
-					set_affinity
+				unique=$(ps --no-headers -L -o psr:1 -p ${qpid}|uniq -u|wc -l)
+				if [ ! -z "$unique" ];then
+					if [ $unique -lt $orig_unique ];then
+						set_affinity
+					fi
 				fi
+				orig_unique=$(ps --no-headers -L -o psr:1 -p ${qpid}|uniq -u|wc -l)
 			done)&
 		fi
 	fi
