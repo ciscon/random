@@ -133,6 +133,7 @@ if [ $num_qthreads -le $cores ] && [ $bind_threads -eq 1 ];then
 						set_affinity
 					fi
 				fi
+				sleep 1
 				orig_unique=$(ps --no-headers -L -o psr:1 -p ${qpid}|uniq -u|wc -l)
 			done)&
 		fi
