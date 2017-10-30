@@ -6,11 +6,13 @@
 #optimization parameters
 nvidia_threaded_optimizations="1" #nvidia threaded optimizations?
 bind_threads="1" #bind threads to cores?
+disable_turbo="1" #disable turbo on intel processors (requires passwordless sudo or will fail)
+sudo_command="sudo -n" #which sudo command to use, non-interactive is default, this will just fail silently if sudo requires a password
+nice_level="-10" #uses sudo_command
 
 quake_path="/opt/quake"
 quake_exe="ezquake-linux-x86_64"
 auto_args="+connectbr nicotinelounge.com" #args to append if no arguments are given
-nice_level="-19"
 notify_command="notify-send -t 1500 -i /opt/quake/quake.png"
 
 #set up notifications
@@ -21,21 +23,40 @@ notify_blacklist='^Spectator' #ignore spectators
 #do we need to translate any of the notifications before displaying them?
 translate_command='sed -u "s/M-iM-s M-rM-eM-aM-dM-y.*$/is ready/g"'
 
-#append extra arguments? example: timedemo
-#extra_args=" -nosound +s_nosound 1 +timedemo fps.qwd"
+#parse white/blacklist for notifications
+grep_command='egrep --line-buffered'
 
+
+
+#set up environment:
 export __GL_YIELD="NOTHING" #never yield
 
-#dwm
+#nvidia: threaded opt?
+if [ $nvidia_threaded_optimizations -eq 1 ];then
+	export LD_PRELOAD="libpthread.so.0 libGL.so.1" 
+	export __GL_THREADED_OPTIMIZATIONS=1
+fi
+
+
+if [ $disable_turbo -eq 1 ];then
+	echo 1 |sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo >/dev/null 2>&1 &
+fi
+
+
+#dwm fix
 wmname LG3D >/dev/null 2>&1
 
 #kill off children when we exit
 #trap 'sleep 1;kill -- -$$' INT TERM EXIT
 trap 'kill $(ps -o pid= --ppid $$)' INT TERM EXIT
 
+#default arguments
+if [ -z "$*" ];then
+	args="$auto_args"
+else
+	args="$*"
+fi
 
-#parse white/blacklist for notifications
-grep_command='egrep --line-buffered'
 
 OLDIFS=$IFS; IFS=$'\n';
 
@@ -46,26 +67,14 @@ for item in $notify_blacklist;do  grep_command+=" | grep --line-buffered -v -e '
 IFS=$OLDIFS
 
 
-#nvidia: threaded opt?
-if [ $nvidia_threaded_optimizations -eq 1 ];then
-	export LD_PRELOAD="libpthread.so.0 libGL.so.1" 
-	export __GL_THREADED_OPTIMIZATIONS=1
-fi
-
-
-if [ -z "$*" ];then
-	args="$auto_args"
-else
-	args="$*"
-fi
-
 
 #spawn quake process and parse stdout for notifications
-nice -n $nice_level "$quake_path"/$quake_exe "$args" -heapsize 262144 -condebug /dev/stdout $timedemo | cat -v | eval "$grep_command" | eval "$translate_command" |xargs -I% $notify_command "%" &
+"$quake_path"/"$quake_exe" "$args" -heapsize 262144 -condebug /dev/stdout $timedemo | cat -v | eval "$grep_command" | eval "$translate_command" |xargs -I% $notify_command "%" &
 
 sleep 1
 
 qpid=$(pgrep -f $quake_exe)
+
 
 #allow threads to spawn
 sleep 5
@@ -89,6 +98,7 @@ if [ $num_qthreads -le $cores ] && [ $bind_threads -eq 1 ];then
 		#set affinity, if we run out of physical cores to pin threads to, let the system decide where they go
 		core=0
 		for thread in $qthreads;do
+			$sudo_command renice -n $nice_level ${thread} >/dev/null 2>&1 #attempt to set nice level
 			if [ $core -lt $physcores ];then
 				taskset -p -c $core $thread >/dev/null 2>&1
 				let core=core+1 
@@ -120,5 +130,13 @@ if [ $num_qthreads -le $cores ] && [ $bind_threads -eq 1 ];then
 fi
 
 wait $qpid
+
+#enable turbo again
+if [ $disable_turbo -eq 1 ];then
+	echo 0 |$sudo_command tee /sys/devices/system/cpu/intel_pstate/no_turbo >/dev/null 2>&1 &
+fi
+
+#set wmname back
+wmname "" >/dev/null 2>&1
 
 exit 0
