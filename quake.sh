@@ -46,9 +46,20 @@ fi
 #dwm fix
 wmname LG3D >/dev/null 2>&1
 
+function clean_exit(){
+
+	#enable turbo again
+	if [ $disable_turbo -eq 1 ];then
+		echo 0 |$sudo_command tee /sys/devices/system/cpu/intel_pstate/no_turbo >/dev/null 2>&1 &
+	fi
+	
+	#set wmname back
+	wmname "" >/dev/null 2>&1
+	
+}
+
 #kill off children when we exit
-#trap 'sleep 1;kill -- -$$' INT TERM EXIT
-trap 'kill $(ps -o pid= --ppid $$)' INT TERM EXIT
+trap 'clean_exit;kill $(ps -o pid= --ppid $$) >/dev/null 2>&1' INT TERM EXIT
 
 #default arguments
 if [ -z "$*" ];then
@@ -131,12 +142,6 @@ fi
 
 wait $qpid
 
-#enable turbo again
-if [ $disable_turbo -eq 1 ];then
-	echo 0 |$sudo_command tee /sys/devices/system/cpu/intel_pstate/no_turbo >/dev/null 2>&1 &
-fi
-
-#set wmname back
-wmname "" >/dev/null 2>&1
+clean_exit
 
 exit 0
