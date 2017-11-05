@@ -43,6 +43,10 @@ if [ $disable_turbo -eq 1 ];then
 fi
 
 
+#disable nmi watchdog
+$sudo_command sysctl kernel.nmi_watchdog=0 >/dev/null 2>&1 &
+
+
 #dwm fix
 wmname LG3D >/dev/null 2>&1
 
