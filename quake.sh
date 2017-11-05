@@ -80,7 +80,7 @@ IFS=$OLDIFS
 
 
 #spawn quake process and parse stdout for notifications
-"$quake_path"/"$quake_exe" "$args" -heapsize 262144 -condebug /dev/stdout $timedemo | cat -v | eval "$grep_command" | eval "$translate_command" |xargs -I% $notify_command "%" &
+"$quake_path"/"$quake_exe" $args -heapsize 262144 -condebug /dev/stdout | cat -v | eval "$grep_command" | eval "$translate_command" |xargs -I% $notify_command "%" &
 
 sleep 1
 
