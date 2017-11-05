@@ -1,7 +1,14 @@
 #!/bin/bash 
 # run quake with libnotify notifications and bind individual threads to physical cores
+# note: for everything to work, user must have already authenticated sudo in the shell, or have sudo permission without a password
 #
 # to monitor core usage: watch -n .5 'ps -L -o pid,tid,%cpu,comm,psr -p `pgrep ezquake-linux`'
+#
+# required binaries/packages (debian)
+#   libnotify-bin: /usr/bin/notify-send
+#   sudo: /usr/bin/sudo
+#   util-linux: /usr/bin/taskset
+
 
 #optimization parameters
 nvidia_threaded_optimizations="1" #nvidia threaded optimizations?
