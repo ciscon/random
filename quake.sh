@@ -1,6 +1,7 @@
 #!/bin/bash 
 # run quake with libnotify notifications and bind individual threads to physical cores
 # note: for everything to work, user must have already authenticated sudo in the shell, or have sudo permission without a password
+#       if sudo does not exist or is not configured properly, commands will silently fail.
 #
 # to monitor core usage: watch -n .5 'ps -L -o pid,tid,%cpu,comm,psr -p `pgrep ezquake-linux`'
 #
@@ -13,13 +14,14 @@
 #optimization parameters
 nvidia_threaded_optimizations="1" #nvidia threaded optimizations?
 bind_threads="1" #bind threads to cores?
-disable_turbo="1" #disable turbo on intel processors (requires passwordless sudo or will fail)
+disable_turbo="0" #disable turbo on intel processors (requires passwordless sudo or will fail)
 sudo_command="sudo -n" #which sudo command to use, non-interactive is default, this will just fail silently if sudo requires a password
 nice_level="-10" #uses sudo_command
 
 quake_path="/opt/quake"
 quake_exe="ezquake-linux-x86_64"
 auto_args="+connectbr nicotinelounge.com" #args to append if no arguments are given
+heapsize="32768" #client default of 32MB
 notify_command="notify-send -t 1500 -i /opt/quake/quake.png"
 
 #set up notifications
@@ -91,7 +93,7 @@ IFS=$OLDIFS
 
 
 #spawn quake process and parse stdout for notifications
-"$quake_path"/"$quake_exe" $args -heapsize 262144 -condebug /dev/stdout | cat -v | eval "$grep_command" | eval "$translate_command" |xargs -I% $notify_command "%" &
+"$quake_path"/"$quake_exe" $args -heapsize $heapsize -condebug /dev/stdout | cat -v | eval "$grep_command" | eval "$translate_command" | xargs -I% $notify_command "%" &
 
 sleep 1
 
@@ -115,7 +117,7 @@ if [ $num_qthreads -le $cores ] && [ $bind_threads -eq 1 ];then
 
 	function set_affinity(){
 		#set thread affinity - sorted based on cpu usage so our primary threads will definitely get their own cores
-		qthreads=$(ps --no-headers -L -o pcpu:1,tid:1 -p ${qpid}|sort -nr|cut -d" " -f2)
+		qthreads=$(ps --no-headers -L -o pcpu:1,tid:1 -p ${qpid}|sort -nr|cut -d" " -f2 2>/dev/null)
 		
 		#set affinity, if we run out of physical cores to pin threads to, let the system decide where they go
 		core=0
@@ -134,18 +136,18 @@ if [ $num_qthreads -le $cores ] && [ $bind_threads -eq 1 ];then
 		if [ $cores -gt 1 ];then
 			set_affinity
 			sleep 1
-			orig_unique=$(ps --no-headers -L -o psr:1 -p ${qpid}|uniq -u|wc -l)
+			orig_unique=$(ps --no-headers -L -o psr:1 -p ${qpid}|uniq -u|wc -l 2>/dev/null)
 			#watch to make sure we haven't respawned the threads
 			(while [ 1 ];do
 				sleep 5
-				unique=$(ps --no-headers -L -o psr:1 -p ${qpid}|uniq -u|wc -l)
+				unique=$(ps --no-headers -L -o psr:1 -p ${qpid}|uniq -u|wc -l 2>/dev/null)
 				if [ ! -z "$unique" ];then
 					if [ $unique -lt $orig_unique ];then
 						set_affinity
 					fi
 				fi
 				sleep 1
-				orig_unique=$(ps --no-headers -L -o psr:1 -p ${qpid}|uniq -u|wc -l)
+				orig_unique=$(ps --no-headers -L -o psr:1 -p ${qpid}|uniq -u|wc -l 2>/dev/null)
 			done)&
 		fi
 	fi
