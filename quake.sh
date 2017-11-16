@@ -35,17 +35,28 @@ translate_command='sed -u "s/M-iM-s M-rM-eM-aM-dM-y.*$/is ready/g"'
 #parse white/blacklist for notifications
 grep_command='egrep --line-buffered'
 
-
-
 #set up environment:
 export __GL_YIELD="NOTHING" #never yield
 
+if [ $(ldconfig -Np|grep libtcmalloc_minimal.so.4$ -c) -gt 0 ];then
+	LD_PRELOAD+="libtcmalloc_minimal.so.4 "
+fi
+
 #nvidia: threaded opt?
 if [ $nvidia_threaded_optimizations -eq 1 ];then
-	export LD_PRELOAD="libpthread.so.0 libGL.so.1" 
+	
+	if [ $(ldconfig -Np|grep libpthread.so.0$ -c) -gt 0 ];then
+		LD_PRELOAD+="libpthread.so.0 "
+	fi
+	if [ $(ldconfig -Np|grep libGL.so.1$ -c) -gt 0 ];then
+		LD_PRELOAD+="libGL.so.1 "
+	fi
+
 	export __GL_THREADED_OPTIMIZATIONS=1
 fi
 
+echo "Preloading: $LD_PRELOAD"
+export LD_PRELOAD
 
 if [ $disable_turbo -eq 1 ];then
 	echo 1 |sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo >/dev/null 2>&1 &
