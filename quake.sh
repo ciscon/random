@@ -39,6 +39,9 @@ grep_command='egrep --line-buffered'
 #set up environment:
 export __GL_YIELD="NOTHING" #never yield
 
+#nvidia: set max performance in case we already haven't
+nvidia-settings -a [gpu:0]/GPUPowerMizerMode=1 > /dev/null 2>&1
+
 if [ $(/sbin/ldconfig -Np|grep libtcmalloc_minimal.so.4$ -c) -gt 0 ];then
 	LD_PRELOAD+="libtcmalloc_minimal.so.4 "
 fi
