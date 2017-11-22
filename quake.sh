@@ -13,6 +13,7 @@
 
 #optimization parameters
 nvidia_threaded_optimizations="1" #nvidia threaded optimizations?
+nvidia_settings_optimizations="1" #attemp to use nvidia-settings for various optimized settings?
 bind_threads="1" #bind threads to cores?
 core_start=1 #which core to start at when setting thread affinity. 1 will skip core 0
 disable_turbo="0" #disable turbo on intel processors (requires passwordless sudo or will fail)
@@ -41,8 +42,18 @@ grep_command='egrep --line-buffered'
 #set up environment:
 export __GL_YIELD="NOTHING" #never yield
 
-#nvidia: set max performance in case we already haven't
-nvidia-settings -a [gpu:0]/GPUPowerMizerMode=1 > /dev/null 2>&1
+if [ $nvidia_settings_optimizations -eq 1 ];then
+	#nvidia: set max performance in case we already haven't
+	nvidia-settings -a GPUPowerMizerMode=1 > /dev/null 2>&1
+	#set performance over quality
+	nvidia-settings -a OpenGLImageSettings=3
+	#no buffer swaps
+	nvidia-settings -a AllowFlipping=0
+	#vsync
+	nvidia-settings -a SyncToVBlank=0
+	#gl_clamp_to_edge
+	nvidia-settings -a TextureClamping=1
+fi
 
 if [ $(/sbin/ldconfig -Np|grep libtcmalloc_minimal.so.4$ -c) -gt 0 ];then
 	LD_PRELOAD+="libtcmalloc_minimal.so.4 "
