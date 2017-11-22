@@ -14,17 +14,19 @@
 #optimization parameters
 nvidia_threaded_optimizations="1" #nvidia threaded optimizations?
 bind_threads="1" #bind threads to cores?
+core_start=1 #which core to start at when setting thread affinity. 1 will skip core 0
 disable_turbo="0" #disable turbo on intel processors (requires passwordless sudo or will fail)
 sudo_command="sudo -n" #which sudo command to use, non-interactive is default, this will just fail silently if sudo requires a password
 nice_level="-10" #uses sudo_command
 
+#game vars
 quake_path="/opt/quake"
 quake_exe="ezquake-linux-x86_64"
 auto_args="+connectbr nicotinelounge.com" #args to append if no arguments are given
 heapsize="32768" #client default of 32MB
-notify_command="notify-send -t 1500 -i /opt/quake/quake.png"
 
 #set up notifications
+notify_command="notify-send -t 1500 -i /opt/quake/quake.png"
 notify_whitelist='entered the game$
 M-iM-s M-rM-eM-aM-dM-y' #player ready
 notify_blacklist='^Spectator' #ignore spectators
@@ -135,7 +137,7 @@ if [ $num_qthreads -le $cores ] && [ $bind_threads -eq 1 ];then
 		qthreads=$(ps --no-headers -L -o pcpu:1,tid:1 -p ${qpid}|sort -nr|cut -d" " -f2 2>/dev/null)
 		
 		#set affinity, if we run out of physical cores to pin threads to, let the system decide where they go
-		core=0
+		core=$core_start
 		for thread in $qthreads;do
 			$sudo_command renice -n $nice_level ${thread} >/dev/null 2>&1 #attempt to set nice level
 			if [ $core -lt $physcores ];then
