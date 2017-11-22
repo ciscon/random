@@ -45,6 +45,7 @@ export __GL_YIELD="NOTHING" #never yield
 if [ $nvidia_settings_optimizations -eq 1 ];then
 	#nvidia: set max performance in case we already haven't
 	nvidia-settings -a GPUPowerMizerMode=1 > /dev/null 2>&1
+	nvidia-settings -a GPUPowerMizerDefaultMode=1 > /dev/null 2>&1
 	#set performance over quality
 	nvidia-settings -a OpenGLImageSettings=3
 	#no buffer swaps
