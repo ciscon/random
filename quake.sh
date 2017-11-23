@@ -15,7 +15,6 @@
 nvidia_threaded_optimizations="1" #nvidia threaded optimizations?
 nvidia_settings_optimizations="1" #attemp to use nvidia-settings for various optimized settings?
 bind_threads="1" #bind threads to cores?
-core_start=1 #which core to start at when setting thread affinity. 1 will skip core 0
 disable_turbo="0" #disable turbo on intel processors (requires passwordless sudo or will fail)
 sudo_command="sudo -n" #which sudo command to use, non-interactive is default, this will just fail silently if sudo requires a password
 nice_level="-10" #uses sudo_command
@@ -144,21 +143,20 @@ num_qthreads=$(ps --no-headers -L -o tid:1 -p ${qpid}|wc -l)
 #only attempt to set affinity if we have enough hardware threads to handle all threads, otherwise do nothing
 if [ $num_qthreads -le $cores ] && [ $bind_threads -eq 1 ];then
 
-	function set_affinity(){
-		#set thread affinity - sorted based on cpu usage so our primary threads will definitely get their own cores
-		qthreads=$(ps --no-headers -L -o pcpu:1,tid:1 -p ${qpid}|sort -nr|cut -d" " -f2 2>/dev/null)
-		
-		#set affinity, if we run out of physical cores to pin threads to, let the system decide where they go
-		core=$core_start
-		for thread in $qthreads;do
-			$sudo_command renice -n $nice_level ${thread} >/dev/null 2>&1 #attempt to set nice level
-			if [ $core -lt $physcores ];then
-				taskset -p -c $core $thread >/dev/null 2>&1
-				let core=core+1 
-			fi
-		done
+        function set_affinity(){
+                #set thread affinity - sorted based on cpu usage so our primary threads will definitely get their own cores
+                qthreads=$(ps --no-headers -L -o pcpu:1,tid:1 -p ${qpid}|sort -nr|cut -d" " -f2 2>/dev/null)
+
+                #set affinity, if we run out of physical cores to pin threads to, just use 0 as these are the least cpu hungry threads anyway
+                let core=$physcores-1
+                for thread in $qthreads;do
+                        taskset -p -c $core $thread >/dev/null 2>&1
+                        if [ $core -gt 0 ];then
+                                let core=core-1
+                        fi
+                        $sudo_command renice -n $nice_level ${thread} >/dev/null 2>&1 #attempt to set nice level
+        	done
 	}
-	
 	
 	#if we got a number, proceed
 	if [[ $cores =~ ^[0-9]+$ ]];then
