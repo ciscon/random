@@ -1,4 +1,7 @@
 #!/bin/bash 
+#
+# source: https://raw.githubusercontent.com/ciscon/random/master/quake.sh
+#
 # run quake with libnotify notifications and bind individual threads to physical cores, starting at last physical core and working our way
 #       backward to core 0.
 #
