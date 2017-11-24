@@ -1,5 +1,7 @@
 #!/bin/bash 
-# run quake with libnotify notifications and bind individual threads to physical cores
+# run quake with libnotify notifications and bind individual threads to physical cores, starting at last physical core and working our way
+#       backward to core 0.
+#
 # note: for everything to work, user must have already authenticated sudo in the shell, or have sudo permission without a password
 #       if sudo does not exist or is not configured properly, commands will silently fail.
 #
@@ -11,6 +13,12 @@
 #   util-linux: /usr/bin/taskset
 
 
+
+#enable desktop notifications through libnotify/notify-send?
+enable_notifications="1"
+
+
+
 #optimization parameters
 nvidia_threaded_optimizations="1" #nvidia threaded optimizations?
 nvidia_settings_optimizations="1" #attemp to use nvidia-settings for various optimized settings?
@@ -19,11 +27,15 @@ disable_turbo="0" #disable turbo on intel processors (requires passwordless sudo
 sudo_command="sudo -n" #which sudo command to use, non-interactive is default, this will just fail silently if sudo requires a password
 nice_level="-10" #uses sudo_command
 
+
+
 #game vars
 quake_path="/opt/quake"
 quake_exe="ezquake-linux-x86_64"
 auto_args="+connectbr nicotinelounge.com" #args to append if no arguments are given
 heapsize="32768" #client default of 32MB
+
+
 
 #set up notifications
 notify_command="notify-send -t 1500 -i /opt/quake/quake.png"
@@ -36,6 +48,7 @@ translate_command='sed -u "s/M-iM-s M-rM-eM-aM-dM-y.*$/is ready/g"'
 
 #parse white/blacklist for notifications
 grep_command='egrep --line-buffered'
+
 
 
 #set up environment:
@@ -121,15 +134,21 @@ IFS=$OLDIFS
 
 
 #spawn quake process and parse stdout for notifications
-"$quake_path"/"$quake_exe" $args -heapsize $heapsize -condebug /dev/stdout | cat -v | eval "$grep_command" | eval "$translate_command" | xargs -I% $notify_command "%" &
+quake_command="$quake_path/$quake_exe $args -heapsize $heapsize"
+notification_command=" -condebug /dev/stdout | cat -v | $grep_command | $translate_command | xargs -I% $notify_command %"
+
+full_command="$quake_command"
+if [ $enable_notifications -eq 1 ];then
+	full_command+="$notification_command" 
+fi
+eval "$full_command" &
 
 sleep 1
 
 qpid=$(pgrep -f $quake_exe)
 
-
 #allow threads to spawn
-sleep 5
+sleep 1 
 
 
 #use number of physical cores
