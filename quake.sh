@@ -170,11 +170,14 @@ if [ $num_qthreads -le $cores ] && [ $bind_threads -eq 1 ];then
                 qthreads=$(ps --no-headers -L -o pcpu:1,tid:1 -p ${qpid}|sort -nr|cut -d" " -f2 2>/dev/null)
 
                 #set affinity, if we run out of physical cores to pin threads to, just use 0 as these are the least cpu hungry threads anyway
-                let core=$physcores-1
+                let core=0
                 for thread in $qthreads;do
                         taskset -p -c $core $thread >/dev/null 2>&1
-                        if [ $core -gt 0 ];then
-                                let core=core-1
+                        if [ $core -lt $physcores  ];then
+                                let core=core+1
+			else
+				#let the kernel decide
+				core="-1"
                         fi
                         $sudo_command renice -n $nice_level ${thread} >/dev/null 2>&1 #attempt to set nice level
         	done
