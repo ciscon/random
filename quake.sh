@@ -146,6 +146,8 @@ if [ $enable_notifications -eq 1 ];then
 fi
 eval "$full_command" &
 
+real_qpid=$!
+
 sleep 1
 
 qpid=$(pgrep -f $quake_exe)
@@ -206,7 +208,7 @@ if [ $num_qthreads -le $cores ] && [ $bind_threads -eq 1 ];then
 
 fi
 
-wait $qpid
+wait $real_qpid
 
 clean_exit
 
