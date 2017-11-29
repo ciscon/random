@@ -81,8 +81,8 @@ if [ $nvidia_threaded_optimizations -eq 1 ];then
 	if [ $(/sbin/ldconfig -Np|grep libpthread.so.0$ -c) -gt 0 ];then
 		LD_PRELOAD+="libpthread.so.0 "
 	fi
-	if [ $(/sbin/ldconfig -Np|grep libGL.so.1$ -c) -gt 0 ];then
-		LD_PRELOAD+="libGL.so.1 "
+	if [ $(/sbin/ldconfig -Np|grep libGL.so$ -c) -gt 0 ];then
+		LD_PRELOAD+="libGL.so "
 	fi
 
 	export __GL_THREADED_OPTIMIZATIONS=1
