@@ -6,7 +6,7 @@
 #       backward to core 0.
 #
 # xorg: we can't do everything there, the following must be added to the device section of your xorg config to force powermizer to never go
-#	above level 1: Option "RegistryDwords" "PowerMizerLevel=0x1;PowerMizerDefault=0x1;PowerMizerDefaultAC=0x1;"
+#	above level 1: Option "RegistryDwords" "PowerMizerLevel=0x1;PowerMizerDefault=0x1;PowerMizerDefaultAC=0x1;OGL_MaxFramesAllowed=0x0"
 #
 # note: for everything to work, user must have already authenticated sudo in the shell, or have sudo permission without a password
 #       if sudo does not exist or is not configured properly, commands will silently fail.
@@ -172,7 +172,7 @@ if [ $num_qthreads -le $cores ] && [ $bind_threads -eq 1 ];then
 
         function set_affinity(){
                 #set thread affinity - sorted based on cpu usage so our primary threads will definitely get their own cores
-                qthreads=$(ps --no-headers -L -o pcpu:1,tid:1 -p ${qpid}|sort -nr|cut -d" " -f2 2>/dev/null)
+                qthreads=$(ps --no-headers -L -o pcpu:1,tid:1 -p ${qpid}|sort -nr|head -n $physcores|cut -d" " -f2 2>/dev/null)
 
                 #set affinity, if we run out of physical cores to pin threads to, just use 0 as these are the least cpu hungry threads anyway
                 let core=0
@@ -181,7 +181,7 @@ if [ $num_qthreads -le $cores ] && [ $bind_threads -eq 1 ];then
                         if [ $core -lt $physcores  ];then
                                 let core=core+1
 			else
-				#let the kernel decide
+				#let the kernel decide, though we should only be looking at the first n threads in which n is the number of physical cores
 				core="-1"
                         fi
                         $sudo_command renice -n $nice_level ${thread} >/dev/null 2>&1 #attempt to set nice level
