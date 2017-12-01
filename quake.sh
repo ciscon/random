@@ -59,6 +59,10 @@ grep_command='egrep --line-buffered'
 
 #set up environment:
 export __GL_YIELD="NOTHING" #never yield
+export __GL_ConformantBlitFramebufferScissor=0 #no scissor test
+export __GL_GSYNC_ALLOWED=0 #no gsync
+export __GL_SYNC_TO_VBLANK=0 #no vsync
+
 
 if [ $nvidia_settings_optimizations -eq 1 ];then
 	#nvidia: set max performance in case we already haven't
