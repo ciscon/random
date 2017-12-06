@@ -2,14 +2,17 @@
 #
 # source: https://raw.githubusercontent.com/ciscon/random/master/quake.sh
 #
-# run quake with libnotify notifications and bind individual threads to physical cores, starting at last physical core and working our way
-#       backward to core 0.
+# run quake with libnotify notifications and bind individual threads to physical cores, once we run out we will allow automatic placement
+#	(default behavior) to take place.  we will also attempt to enable some optimized settings for nvidia, quietly failing if the 
+#	hardware/software isn't present.
+# 
 #
-# xorg: we can't do everything there, the following must be added to the device section of your xorg config to force powermizer to never go
-#	above level 1 and enable coolbits:  
+# xorg: we can't do everything within this script, the following must be added to the device section of your xorg config to force powermizer 
+#	to never go above level 1 and enable coolbits:  
+#
 #			Option "RegistryDwords" "PowerMizerLevel=0x1;PowerMizerDefault=0x1;PowerMizerDefaultAC=0x1;OGL_MaxFramesAllowed=0x0"
 #			Option "Coolbits" "16"
-
+#
 #
 # note: for everything to work, user must have already authenticated sudo in the shell, or have sudo permission without a password
 #       if sudo does not exist or is not configured properly, commands will silently fail.
