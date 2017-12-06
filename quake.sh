@@ -6,7 +6,10 @@
 #       backward to core 0.
 #
 # xorg: we can't do everything there, the following must be added to the device section of your xorg config to force powermizer to never go
-#	above level 1: Option "RegistryDwords" "PowerMizerLevel=0x1;PowerMizerDefault=0x1;PowerMizerDefaultAC=0x1;OGL_MaxFramesAllowed=0x0"
+#	above level 1 and enable coolbits:  
+#			Option "RegistryDwords" "PowerMizerLevel=0x1;PowerMizerDefault=0x1;PowerMizerDefaultAC=0x1;OGL_MaxFramesAllowed=0x0"
+#			Option "Coolbits" "16"
+
 #
 # note: for everything to work, user must have already authenticated sudo in the shell, or have sudo permission without a password
 #       if sudo does not exist or is not configured properly, commands will silently fail.
