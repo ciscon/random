@@ -32,7 +32,7 @@ enable_notifications="1"
 
 
 #optimization parameters
-nvidia_threaded_optimizations="1" #nvidia threaded optimizations?
+nvidia_threaded_optimizations="0" #nvidia threaded optimizations?
 nvidia_settings_optimizations="1" #attempt to use nvidia-settings for various optimized settings?
 bind_threads="1" #bind threads to cores?
 disable_turbo="0" #disable turbo on intel processors (requires passwordless sudo or will fail)
