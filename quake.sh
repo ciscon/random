@@ -33,7 +33,7 @@ enable_notifications="1"
 
 #optimization parameters
 nvidia_threaded_optimizations="1" #nvidia threaded optimizations?
-nvidia_settings_optimizations="1" #attemp to use nvidia-settings for various optimized settings?
+nvidia_settings_optimizations="1" #attempt to use nvidia-settings for various optimized settings?
 bind_threads="1" #bind threads to cores?
 disable_turbo="0" #disable turbo on intel processors (requires passwordless sudo or will fail)
 sudo_command="sudo -n" #which sudo command to use, non-interactive is default, this will just fail silently if sudo requires a password
@@ -112,10 +112,17 @@ fi
 $sudo_command sysctl kernel.nmi_watchdog=0 >/dev/null 2>&1 &
 
 
+#xfce compositing - turn off
+xfconf-query -c xfwm4 -p /general/use_compositing -t bool -s false >/dev/null 2>&1
+
+
 #dwm fix
 wmname LG3D >/dev/null 2>&1
 
 function clean_exit(){
+
+	#xfce compositing - turn back on
+	xfconf-query -c xfwm4 -p /general/use_compositing -t bool -s true >/dev/null 2>&1
 
 	#enable turbo again
 	if [ $disable_turbo -eq 1 ];then
