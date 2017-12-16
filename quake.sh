@@ -157,7 +157,7 @@ IFS=$OLDIFS
 
 #spawn quake process and parse stdout for notifications
 quake_command="$quake_path/$quake_exe $args -heapsize $heapsize"
-notification_command=" -condebug /dev/stdout | cat -v | $grep_command | $translate_command | xargs -I% $notify_command %"
+notification_command=" -condebug /dev/stdout | cat -v | $grep_command | $translate_command | stdbuf -i0 -o0 tr -cd '[[:alnum:] \n]._-' |xargs -I% $notify_command %"
 
 full_command="$quake_command"
 if [ $enable_notifications -eq 1 ];then
