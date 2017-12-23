@@ -32,7 +32,7 @@ enable_notifications="1"
 
 
 #optimization parameters
-nvidia_threaded_optimizations="1" #nvidia threaded optimizations?
+nvidia_threaded_optimizations="0" #nvidia threaded optimizations?
 nvidia_settings_optimizations="1" #attempt to use nvidia-settings for various optimized settings?
 bind_threads="1" #bind threads to cores?
 disable_turbo="0" #disable turbo on intel processors (requires passwordless sudo or will fail)
@@ -81,10 +81,6 @@ if [ $nvidia_settings_optimizations -eq 1 ];then
 	nvidia-settings -a SyncToVBlank=0
 	#gl_clamp_to_edge
 	nvidia-settings -a TextureClamping=1
-fi
-
-if [ $(/sbin/ldconfig -Np|grep libtcmalloc_minimal.so.4$ -c) -gt 0 ];then
-	LD_PRELOAD+="libtcmalloc_minimal.so.4 "
 fi
 
 #nvidia: threaded opt?
