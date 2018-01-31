@@ -62,6 +62,12 @@ translate_command='sed -u "s/M-iM-s M-rM-eM-aM-dM-y.*$/is ready/g"'
 grep_command='egrep --line-buffered'
 
 
+quake_fifo="/tmp/quake_fifo"
+
+if [ ! -p $quake_fifo ];then
+	mkfifo $quake_fifo
+fi
+
 
 #set up environment:
 export __GL_YIELD="NOTHING" #never yield
@@ -151,14 +157,16 @@ for item in $notify_blacklist;do  grep_command+=" | grep --line-buffered -v -e '
 IFS=$OLDIFS
 
 
-
 #spawn quake process and parse stdout for notifications
 quake_command="$quake_path/$quake_exe $args -heapsize $heapsize"
-notification_command=" -condebug /dev/stdout | cat -v | $grep_command | $translate_command | stdbuf -i0 -o0 tr -cd '[[:alnum:] \n]._-' |xargs -I% $notify_command %"
+notification_command=" -condebug /dev/stdout > $quake_fifo"
+
 
 full_command="$quake_command"
 if [ $enable_notifications -eq 1 ];then
 	full_command+="$notification_command" 
+	#spawn notification command
+	(cat -v $quake_fifo | eval $grep_command | eval $translate_command | stdbuf -i0 -o0 tr -cd '[[:alnum:] \n]._-' |xargs -I% $notify_command %)&
 fi
 eval "$full_command" &
 
