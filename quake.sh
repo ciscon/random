@@ -46,6 +46,7 @@ quake_path="/opt/quake"
 quake_exe="ezquake-linux-x86_64"
 auto_args="+connectbr nicotinelounge.com" #args to append if no arguments are given
 heapsize="32768" #client default of 32MB
+random_client_port="1" #use random ephemeral port
 
 
 
@@ -159,6 +160,11 @@ IFS=$OLDIFS
 
 #spawn quake process and parse stdout for notifications
 quake_command="$quake_path/$quake_exe $args -heapsize $heapsize"
+
+if [ $random_client_port -gt 0 ];then
+	quake_command+=" -clientport 0 "
+fi
+
 notification_command=" -condebug /dev/stdout > $quake_fifo"
 
 
