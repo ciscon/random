@@ -37,7 +37,7 @@ nvidia_settings_optimizations="1" #attempt to use nvidia-settings for various op
 bind_threads="1" #bind threads to cores?
 disable_turbo="0" #disable turbo on intel processors (requires passwordless sudo or will fail)
 sudo_command="sudo -n" #which sudo command to use, non-interactive is default, this will just fail silently if sudo requires a password
-nice_level="-10" #uses sudo_command
+nice_level="-12" #uses sudo_command
 
 
 
