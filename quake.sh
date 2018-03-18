@@ -36,7 +36,7 @@ nvidia_threaded_optimizations="0" #nvidia threaded optimizations?
 nvidia_settings_optimizations="1" #attempt to use nvidia-settings for various optimized settings?
 bind_threads="1" #bind threads to cores?
 disable_turbo="0" #disable turbo on intel processors (requires passwordless sudo or will fail)
-sudo_command="sudo -n" #which sudo command to use, non-interactive is default, this will just fail silently if sudo requires a password
+sudo_command="sudo -n" #which sudo command to use, non-interactive is default, this will just fail silently if sudo requires a password - comment out if your user has permission to set the nice level specified with nice_level
 nice_level="-12" #uses sudo_command
 
 
@@ -108,7 +108,7 @@ echo "Preloading: $LD_PRELOAD"
 export LD_PRELOAD
 
 if [ $disable_turbo -eq 1 ];then
-	echo 1 |sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo >/dev/null 2>&1 &
+	echo 1 |$sudo_command tee /sys/devices/system/cpu/intel_pstate/no_turbo >/dev/null 2>&1 &
 fi
 
 
