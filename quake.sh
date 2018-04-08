@@ -51,7 +51,8 @@ client_port="2018" #choose client port, take default with 0, or random ephemeral
 
 
 #set up notifications
-notify_command="notify-send -t 1500 -i /opt/quake/quake.png"
+notify_command="notify-send --hint=int:transient:2 -t 1500 -i /opt/quake/quake.png"
+
 notify_whitelist='entered the game$
 M-iM-s M-rM-eM-aM-dM-y' #player ready
 notify_blacklist='^Spectator' #ignore spectators
