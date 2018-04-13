@@ -17,6 +17,8 @@
 # note: for everything to work, user must have already authenticated sudo in the shell, or have sudo permission without a password
 #       if sudo does not exist or is not configured properly, commands will silently fail.
 #
+#	nice level will still be attempted regardless, it just may fail.  please look at /etc/security/limits.conf
+#
 # to monitor core usage: watch -n .5 'ps -L -o pid,tid,%cpu,comm,psr -p `pgrep ezquake-linux`'
 #
 # required binaries/packages (debian)
@@ -36,9 +38,7 @@ nvidia_threaded_optimizations="0" #nvidia threaded optimizations?
 nvidia_settings_optimizations="1" #attempt to use nvidia-settings for various optimized settings?
 bind_threads="1" #bind threads to cores?
 disable_turbo="0" #disable turbo on intel processors (requires passwordless sudo or will fail)
-sudo_command="sudo -n" #which sudo command to use, non-interactive is default, this will just fail silently if sudo requires a password - comment out if your user has permission to set the nice level specified with nice_level
 nice_level="-12" #uses sudo_command
-
 
 
 #game vars
@@ -68,6 +68,13 @@ quake_fifo="/tmp/quake_fifo"
 
 if [ ! -p $quake_fifo ];then
 	mkfifo $quake_fifo
+fi
+
+
+sudo_command=""
+#do we have passwordless sudo?
+if sudo -n echo >/dev/null 2>&1;then
+	sudo_command="sudo -n" #which sudo command to use, non-interactive is default, this will just fail silently if sudo requires a password - comment out if your user has permission to set the nice level specified with nice_level
 fi
 
 
@@ -108,14 +115,15 @@ fi
 echo "Preloading: $LD_PRELOAD"
 export LD_PRELOAD
 
-if [ $disable_turbo -eq 1 ];then
+if [ $disable_turbo -eq 1 ] && [ ! -z "$sudo_command" ];then
 	echo 1 |$sudo_command tee /sys/devices/system/cpu/intel_pstate/no_turbo >/dev/null 2>&1 &
 fi
 
 
 #disable nmi watchdog
-$sudo_command sysctl kernel.nmi_watchdog=0 >/dev/null 2>&1 &
-
+if [ ! -z "$sudo_command" ];then
+	$sudo_command sysctl kernel.nmi_watchdog=0 >/dev/null 2>&1 &
+fi
 
 #xfce compositing - turn off
 xfconf-query -c xfwm4 -p /general/use_compositing -t bool -s false >/dev/null 2>&1
@@ -130,7 +138,7 @@ function clean_exit(){
 	xfconf-query -c xfwm4 -p /general/use_compositing -t bool -s true >/dev/null 2>&1
 
 	#enable turbo again
-	if [ $disable_turbo -eq 1 ];then
+	if [ $disable_turbo -eq 1 ] && [ ! -z "$sudo_command" ];then
 		echo 0 |$sudo_command tee /sys/devices/system/cpu/intel_pstate/no_turbo >/dev/null 2>&1 &
 	fi
 	
@@ -170,12 +178,13 @@ fi
 notification_command=" -condebug /dev/stdout > $quake_fifo"
 
 
-full_command="$quake_command"
+full_command="nice -n $nice_level $quake_command"
 if [ $enable_notifications -eq 1 ];then
 	full_command+="$notification_command" 
 	#spawn notification command
 	(cat -v $quake_fifo | eval $grep_command | eval $translate_command | stdbuf -i0 -o0 tr -cd '[[:alnum:] \n]._-' |xargs -I% $notify_command %)&
 fi
+
 eval "$full_command" &
 
 real_qpid=$!
@@ -213,7 +222,9 @@ if [ $num_qthreads -le $cores ] && [ $bind_threads -eq 1 ];then
 				#let the kernel decide, though we should only be looking at the first n threads in which n is the number of physical cores
 				core="-1"
                         fi
-                        $sudo_command renice -n $nice_level ${thread} >/dev/null 2>&1 #attempt to set nice level
+			if [ ! -z "$sudo_command" ];then
+                        	$sudo_command renice -n $nice_level ${thread} >/dev/null 2>&1 #attempt to set nice level
+			fi
         	done
 	}
 	
