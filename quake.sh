@@ -135,7 +135,7 @@ wmname LG3D >/dev/null 2>&1
 function clean_exit(){
 
 	#xfce compositing - turn back on
-	xfconf-query -c xfwm4 -p /general/use_compositing -t bool -s true >/dev/null 2>&1
+	xfconf-query -c xfwm4 -p /general/use_compositing -t bool -s true >/dev/null 2>&1&
 
 	#enable turbo again
 	if [ $disable_turbo -eq 1 ] && [ ! -z "$sudo_command" ];then
@@ -143,7 +143,10 @@ function clean_exit(){
 	fi
 	
 	#set wmname back
-	wmname "" >/dev/null 2>&1
+	wmname "" >/dev/null 2>&1&
+
+	#kill child processes
+	kill $(jobs -p)
 	
 }
 
