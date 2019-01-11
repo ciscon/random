@@ -54,7 +54,7 @@ client_port="2018" #choose client port, take default with 0, or random ephemeral
 notify_command="notify-send --hint=int:transient:2 -t 1500 -i /opt/quake/quake.png"
 
 notify_whitelist='entered the game$
-M-iM-s M-rM-eM-aM-dM-y' #player ready
+is ready'
 notify_blacklist='^Spectator' #ignore spectators
 
 #do we need to translate any of the notifications before displaying them?
@@ -185,7 +185,7 @@ full_command="nice -n $nice_level $quake_command"
 if [ $enable_notifications -eq 1 ];then
 	full_command+="$notification_command" 
 	#spawn notification command
-	(cat -v $quake_fifo | eval $grep_command | eval $translate_command | stdbuf -i0 -o0 tr -cd '[[:alnum:] \n]._-' |xargs -I% $notify_command %)&
+	(cat -v $quake_fifo | stdbuf -i0 -o0 sed 's/M-//g' |eval $grep_command | eval $translate_command | stdbuf -i0 -o0 tr -cd '[[:alnum:] \n]._-' |xargs -I% $notify_command %)&
 fi
 
 eval "$full_command" &
