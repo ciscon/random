@@ -88,15 +88,15 @@ export vblank_mode=0 #no vsync
 
 if [ $nvidia_settings_optimizations -eq 1 ];then
 	#nvidia: set max performance in case we already haven't
-	nvidia-settings -a GPUPowerMizerMode=1
+	nvidia-settings -a GPUPowerMizerMode=1 >/dev/null 2>&1
 	#set performance over quality
-	nvidia-settings -a OpenGLImageSettings=3
+	nvidia-settings -a OpenGLImageSettings=3 >/dev/null 2>&1
 	#no buffer swaps
-	nvidia-settings -a AllowFlipping=0
+	nvidia-settings -a AllowFlipping=0 >/dev/null 2>&1
 	#vsync
-	nvidia-settings -a SyncToVBlank=0
+	nvidia-settings -a SyncToVBlank=0 >/dev/null 2>&1
 	#gl_clamp_to_edge
-	nvidia-settings -a TextureClamping=0
+	nvidia-settings -a TextureClamping=0 > /dev/null 2>&1
 fi
 
 #nvidia: threaded opt?
@@ -112,7 +112,9 @@ if [ $nvidia_threaded_optimizations -eq 1 ];then
 	export __GL_THREADED_OPTIMIZATIONS=1
 fi
 
-echo "Preloading: $LD_PRELOAD"
+if [ ! -z "$LD_PRELOAD" ];then
+  echo "Preloading: $LD_PRELOAD"
+fi
 export LD_PRELOAD
 
 if [ $disable_turbo -eq 1 ] && [ ! -z "$sudo_command" ];then
@@ -188,7 +190,7 @@ if [ $enable_notifications -eq 1 ];then
 	(cat -v $quake_fifo | stdbuf -i0 -o0 sed 's/M-//g' |eval $grep_command | eval $translate_command | stdbuf -i0 -o0 tr -cd '[[:alnum:] \n]._-' |xargs -I% $notify_command %)&
 fi
 
-eval "$full_command" &
+eval "$full_command >/dev/null 2>&1" &
 
 real_qpid=$!
 
@@ -205,7 +207,7 @@ physcores=$(egrep -e "core id" -e ^physical /proc/cpuinfo|xargs -l2 echo|sort -u
 #or use number of hardware threads
 cores=$(egrep -e "core id" -e ^processor /proc/cpuinfo|xargs -l2 echo|sort -u|wc -l)
 #number of threads spawned
-num_qthreads=$(ps --no-headers -L -o tid:1 -p ${qpid}|wc -l)
+num_qthreads=$(ps --no-headers -L -o tid:1 -p ${qpid}|wc -l 2>/dev/null)
 
 
 #only attempt to set affinity if we have enough hardware threads to handle all threads, otherwise do nothing
