@@ -44,7 +44,7 @@ nice_level="-12" #uses sudo_command
 #game vars
 quake_path="/opt/quake"
 quake_exe="ezquake-linux-x86_64"
-auto_args="+connectbr nicotinelounge.com" #args to append if no arguments are given
+auto_args="-no-triple-gl-buffer +connectbr nicotinelounge.com" #args to append if no arguments are given
 heapsize="32768" #client default of 32MB
 client_port="2018" #choose client port, take default with 0, or random ephemeral with -1
 
