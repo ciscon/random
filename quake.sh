@@ -148,7 +148,7 @@ function clean_exit(){
 	wmname "" >/dev/null 2>&1&
 
 	#kill child processes
-	kill $(jobs -p)
+	kill $(jobs -p) >/dev/null 2>&1
 	
 }
 
@@ -190,7 +190,7 @@ if [ $enable_notifications -eq 1 ];then
 	(cat -v $quake_fifo | stdbuf -i0 -o0 sed 's/M-//g' |eval $grep_command | eval $translate_command | stdbuf -i0 -o0 tr -cd '[[:alnum:] \n]._-' |xargs -I% $notify_command %)&
 fi
 
-eval "$full_command >/dev/null 2>&1" &
+eval "$full_command 2>&1" &
 
 real_qpid=$!
 
