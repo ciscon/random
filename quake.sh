@@ -26,11 +26,16 @@
 #   sudo: /usr/bin/sudo
 #   util-linux: /usr/bin/taskset
 
+#game vars - these most likely need to be customized
+quake_path="/opt/quake"
+quake_exe="ezquake-linux-x86_64"
+auto_args="-no-triple-gl-buffer +connectbr nicotinelounge.com" #args to append if no arguments are given
+heapsize="32768" #client default of 32MB
+client_port="2018" #choose client port, take default with 0, or random ephemeral with -1
 
 
 #enable desktop notifications through libnotify/notify-send?
 enable_notifications="1"
-
 
 
 #optimization parameters
@@ -39,15 +44,6 @@ nvidia_settings_optimizations="1" #attempt to use nvidia-settings for various op
 bind_threads="1" #bind threads to cores?
 disable_turbo="0" #disable turbo on intel processors (requires passwordless sudo or will fail)
 nice_level="-12" #uses sudo_command
-
-
-#game vars
-quake_path="/opt/quake"
-quake_exe="ezquake-linux-x86_64"
-auto_args="-no-triple-gl-buffer +connectbr nicotinelounge.com" #args to append if no arguments are given
-heapsize="32768" #client default of 32MB
-client_port="2018" #choose client port, take default with 0, or random ephemeral with -1
-
 
 
 #set up notifications
@@ -77,6 +73,12 @@ if sudo -n echo >/dev/null 2>&1;then
 	sudo_command="sudo -n" #which sudo command to use, non-interactive is default, this will just fail silently if sudo requires a password - comment out if your user has permission to set the nice level specified with nice_level
 fi
 
+
+#check that dir and bin actually exist
+if [ ! -d "$quake_path" ] || [ ! -f "$quake_path/$quake_exe" ];then
+	echo "quake path or executable not found, please check these variables!  bailing out."
+	exit 1
+fi
 
 #set up environment:
 export __GL_YIELD="NOTHING" #never yield
