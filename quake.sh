@@ -99,6 +99,10 @@ if [ $nvidia_settings_optimizations -eq 1 ];then
 	nvidia-settings -a SyncToVBlank=0 >/dev/null 2>&1
 	#gl_clamp_to_edge
 	nvidia-settings -a TextureClamping=0 > /dev/null 2>&1
+
+	#enable shader cache
+	export __GL_SHADER_DISK_CACHE_PATH=/tmp/nvidia_shader_cache
+	mkdir -p /tmp/nvidia_shader_cache
 fi
 
 #opengl multithreading
