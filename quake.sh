@@ -39,7 +39,7 @@ enable_notifications="1"
 
 
 #optimization parameters
-nvidia_threaded_optimizations="0" #nvidia threaded optimizations?
+opengl_multithreading="0" #nvidia/mesa threaded optimizations?
 nvidia_settings_optimizations="1" #attempt to use nvidia-settings for various optimized settings?
 bind_threads="1" #bind threads to cores?
 disable_turbo="0" #disable turbo on intel processors (requires passwordless sudo or will fail)
@@ -101,8 +101,8 @@ if [ $nvidia_settings_optimizations -eq 1 ];then
 	nvidia-settings -a TextureClamping=0 > /dev/null 2>&1
 fi
 
-#nvidia: threaded opt?
-if [ $nvidia_threaded_optimizations -eq 1 ];then
+#opengl multithreading
+if [ $opengl_multithreading -eq 1 ];then
 	
 	if [ $(/sbin/ldconfig -Np|grep libpthread.so.0$ -c) -gt 0 ];then
 		LD_PRELOAD+="libpthread.so.0 "
@@ -112,6 +112,7 @@ if [ $nvidia_threaded_optimizations -eq 1 ];then
 	fi
 
 	export __GL_THREADED_OPTIMIZATIONS=1
+	export mesa_glthread=true
 fi
 
 if [ ! -z "$LD_PRELOAD" ];then
