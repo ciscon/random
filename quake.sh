@@ -206,7 +206,7 @@ sleep 1
 qpid=$(pgrep -f $quake_exe)
 
 #allow threads to spawn
-sleep 1 
+sleep 5
 
 
 #use number of physical cores
