@@ -62,10 +62,13 @@ while read -r line; do
         version=$(echo -n "$line" | cut -f2 -d$'\t')
         host=$(echo -n "$line" | cut -f3 -d$'\t')
         server=$(echo -n "$line" | cut -f4 -d$'\t')
-        admins[$key]="$admin,$adminemail,$version,$server,$host"
+        #omitting server (ip) for now
+        admins[$key]="$host,$version,$admin,$adminemail"
     fi
 
 done <<< "$output"
+
+echo "Server,Version,Admin,Contact"
 
 for adminline in "${!admins[@]}";do
     echo ${admins[$adminline]}
