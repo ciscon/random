@@ -40,15 +40,21 @@ while read -r line; do
 
     adminfull=$(echo -n "$line" | cut -f1 -d$'\t')
 
-    adminemail=$(echo "$adminfull"|awk -F '[<>]' '{print $2}')
-    admin=$(echo "$adminfull"|awk -F '[<>]' '{print $1}'|awk '{$1=$1};1')
+    adminemail=$(echo "$adminfull"|awk -F '[<>]' '{print $2}'|sed 's/\[at\]/@/g')
+    admin=$(echo "$adminfull"|awk -F '[<>]' '{print $1}'|awk '{$1=$1};1'|sed 's/\[at\]/@/g')
+
+    key="$adminemail"
 
     if [ -z "$admin" ];then
         admin="$adminemail"
     fi
-    if [ ! -z "$adminemail" ];then
-        key="$adminemail"
-    else
+    if [ -z "$adminemail" ];then
+        if echo "$admin"|grep -e '@' >/dev/null 2>&1;then
+            adminemail=$(echo "$admin"|rev | cut -d' ' -f 1 | rev)
+        fi
+    fi
+    if [ -z "$adminemail" ];then
+        adminemail="$admin"
         key="$admin"
     fi
 
