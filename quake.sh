@@ -90,16 +90,20 @@ export vblank_mode=0 #no vsync
 
 if [ ! -z "$sudo_command" ];then
 
-	#attempt to force the gpu to its highest clock (non nvidia)
+	#gpu: attempt to force the gpu to its highest clock (non nvidia)
 	echo 1 |$sudo_command tee /sys/devices/system/cpu/intel_pstate/no_turbo >/dev/null 2>&1 &
 	maxclock=$(head -n 1 /sys/devices/*/*/drm/card0/gt_boost_freq_mhz 2>/dev/null)
 	if [ ! -z "$maxclock" ];then
 		echo "$maxclock"|$sudo_command tee /sys/devices/*/*/drm/card0/gt_min_freq_mhz >/dev/null 2>&1 &
 	fi
+	#for for amdgpu folks
+	if [ -e /sys/class/drm/card0/device/power_dpm_force_performance_level ];then
+		echo high|$sudo_command tee /sys/class/drm/card*/device/power_dpm_force_performance_level >/dev/null 2>&1 &
+	fi
 
-	#set performance governor if we can
+	#cpu: set performance governor if we can
 	for i in /sys/devices/system/cpu/cpufreq/policy*/scaling_governor;do
-		echo performance|sudo tee "$i" >/dev/null 2>&1 &
+		echo performance|$sudo_command tee "$i" >/dev/null 2>&1 &
 	done
 
 fi
