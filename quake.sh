@@ -88,6 +88,18 @@ export __GL_ALLOW_UNOFFICIAL_PROTOCOL=1 #incomplete, must have xorg config optio
 export vblank_mode=0 #no vsync
 
 
+#attempt to force the gpu to its highest clock (non nvidia)
+if [ ! -z "$sudo_command" ];then
+
+	echo 1 |$sudo_command tee /sys/devices/system/cpu/intel_pstate/no_turbo >/dev/null 2>&1 &
+	maxclock=$(head -n 1 /sys/devices/*/*/drm/card0/gt_boost_freq_mhz)
+	if [ ! -z "$maxclock" ];then
+		echo "$maxclock"|$sudo_command tee /sys/devices/*/*/drm/card0/gt_min_freq_mhz >/dev/null 2>&1 &
+	fi
+
+fi
+
+
 if [ $nvidia_settings_optimizations -eq 1 ];then
 	#nvidia: set max performance in case we already haven't
 	nvidia-settings -a GPUPowerMizerMode=1 >/dev/null 2>&1
@@ -107,7 +119,7 @@ fi
 
 #opengl multithreading
 if [ $opengl_multithreading -eq 1 ];then
-	
+
 	if [ $(/sbin/ldconfig -Np|grep libpthread.so.0$ -c) -gt 0 ];then
 		LD_PRELOAD+="libpthread.so.0 "
 	fi
@@ -120,7 +132,7 @@ if [ $opengl_multithreading -eq 1 ];then
 fi
 
 if [ ! -z "$LD_PRELOAD" ];then
-  echo "Preloading: $LD_PRELOAD"
+	echo "Preloading: $LD_PRELOAD"
 fi
 export LD_PRELOAD
 
@@ -150,13 +162,13 @@ function clean_exit(){
 	if [ $disable_turbo -eq 1 ] && [ ! -z "$sudo_command" ];then
 		echo 0 |$sudo_command tee /sys/devices/system/cpu/intel_pstate/no_turbo >/dev/null 2>&1 &
 	fi
-	
+
 	#set wmname back
 	wmname "" >/dev/null 2>&1&
 
 	#kill child processes
 	kill $(jobs -p) >/dev/null 2>&1
-	
+
 }
 
 #kill off children when we exit
@@ -220,26 +232,26 @@ num_qthreads=$(ps --no-headers -L -o tid:1 -p ${qpid}|wc -l 2>/dev/null)
 #only attempt to set affinity if we have enough hardware threads to handle all threads, otherwise do nothing
 if [ $num_qthreads -le $cores ] && [ $bind_threads -eq 1 ];then
 
-        function set_affinity(){
-                #set thread affinity - sorted based on cpu usage so our primary threads will definitely get their own cores
-                qthreads=$(ps --no-headers -L -o pcpu:1,tid:1 -p ${qpid}|sort -nr|head -n $physcores|cut -d" " -f2 2>/dev/null)
+	function set_affinity(){
+		#set thread affinity - sorted based on cpu usage so our primary threads will definitely get their own cores
+		qthreads=$(ps --no-headers -L -o pcpu:1,tid:1 -p ${qpid}|sort -nr|head -n $physcores|cut -d" " -f2 2>/dev/null)
 
-                #set affinity, if we run out of physical cores to pin threads to, just use 0 as these are the least cpu hungry threads anyway
-                let core=0
-                for thread in $qthreads;do
-                        taskset -p -c $core $thread >/dev/null 2>&1
-                        if [ $core -lt $physcores  ];then
-                                let core=core+1
+		#set affinity, if we run out of physical cores to pin threads to, just use 0 as these are the least cpu hungry threads anyway
+		let core=0
+		for thread in $qthreads;do
+			taskset -p -c $core $thread >/dev/null 2>&1
+			if [ $core -lt $physcores  ];then
+				let core=core+1
 			else
 				#let the kernel decide, though we should only be looking at the first n threads in which n is the number of physical cores
 				core="-1"
-                        fi
-			if [ ! -z "$sudo_command" ];then
-                        	$sudo_command renice -n $nice_level ${thread} >/dev/null 2>&1 #attempt to set nice level
 			fi
-        	done
+			if [ ! -z "$sudo_command" ];then
+				$sudo_command renice -n $nice_level ${thread} >/dev/null 2>&1 #attempt to set nice level
+			fi
+		done
 	}
-	
+
 	#if we got a number, proceed
 	if [[ $cores =~ ^[0-9]+$ ]];then
 		if [ $cores -gt 1 ];then
@@ -248,16 +260,16 @@ if [ $num_qthreads -le $cores ] && [ $bind_threads -eq 1 ];then
 			orig_unique=$(ps --no-headers -L -o psr:1 -p ${qpid}|uniq -u|wc -l 2>/dev/null)
 			#watch to make sure we haven't respawned the threads
 			(while [ 1 ];do
-				sleep 5
-				unique=$(ps --no-headers -L -o psr:1 -p ${qpid}|uniq -u|wc -l 2>/dev/null)
-				if [ ! -z "$unique" ];then
-					if [ $unique -lt $orig_unique ];then
-						set_affinity
+					sleep 5
+					unique=$(ps --no-headers -L -o psr:1 -p ${qpid}|uniq -u|wc -l 2>/dev/null)
+					if [ ! -z "$unique" ];then
+						if [ $unique -lt $orig_unique ];then
+							set_affinity
+						fi
 					fi
-				fi
-				sleep 1
-				orig_unique=$(ps --no-headers -L -o psr:1 -p ${qpid}|uniq -u|wc -l 2>/dev/null)
-			done)&
+					sleep 1
+					orig_unique=$(ps --no-headers -L -o psr:1 -p ${qpid}|uniq -u|wc -l 2>/dev/null)
+				done)&
 		fi
 	fi
 
