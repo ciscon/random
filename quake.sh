@@ -100,6 +100,10 @@ if [ ! -z "$sudo_command" ];then
 	if [ -e /sys/class/drm/card0/device/power_dpm_force_performance_level ];then
 		echo high|$sudo_command tee /sys/class/drm/card*/device/power_dpm_force_performance_level >/dev/null 2>&1 &
 	fi
+	#older amd cards
+	if [ -e /sys/class/drm/card0/device/power_dpm_state ];then
+		echo performance|$sudo_command tee /sys/class/drm/card*/device/power_dpm_force_performance_level >/dev/null 2>&1 &
+	fi
 
 	#cpu: set performance governor if we can
 	for i in /sys/devices/system/cpu/cpufreq/policy*/scaling_governor;do
