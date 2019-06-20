@@ -2,26 +2,15 @@
 #
 # source: https://raw.githubusercontent.com/ciscon/random/master/quake.sh
 #
-# run quake with libnotify notifications and bind individual threads to physical cores, once we run out we will allow automatic placement
-#	(default behavior) to take place.  we will also attempt to enable some optimized settings for nvidia, quietly failing if the 
-#	hardware/software isn't present.
-# 
-#
-# xorg: we can't do everything within this script, the following must be added to the device section of your xorg config to force powermizer 
-#	to never go above level 1 and enable coolbits:  
-#
-#			Option "RegistryDwords" "PowerMizerLevel=0x1;PowerMizerDefault=0x1;PowerMizerDefaultAC=0x1;OGL_MaxFramesAllowed=0x0"
-#			Option "Coolbits" "16"
-#
+# run quake with libnotify notifications (when players are ready/enter by default), bind individual threads to physical cores, and attempt some performance tweaks
+#  
 #
 # note: for everything to work, user must have already authenticated sudo in the shell, or have sudo permission without a password
-#       if sudo does not exist or is not configured properly, commands will silently fail.
-#
-#	nice level will still be attempted regardless, it just may fail.  please look at /etc/security/limits.conf
+#       if sudo does not exist or is not configured properly, commands will silently fail, though the user will be asked to authenticate.
 #
 # to monitor core usage: watch -n .5 'ps -L -o pid,tid,%cpu,comm,psr -p `pgrep ezquake-linux`'
 #
-# required binaries/packages (debian)
+# recommended binaries/packages (debian)
 #   libnotify-bin: /usr/bin/notify-send
 #   sudo: /usr/bin/sudo
 #   util-linux: /usr/bin/taskset
@@ -37,6 +26,8 @@ client_port="2018" #choose client port, take default with 0, or random ephemeral
 #enable desktop notifications (when users join/ready by default) through libnotify/notify-send?
 enable_notifications="1"
 
+#ask user to authenticate if needed?
+sudo_ask="1"
 
 #optimization parameters
 opengl_multithreading="1" #nvidia/mesa threaded optimizations?
@@ -61,9 +52,14 @@ notify_blacklist='^Spectator' #ignore spectators
 #do we need to translate any of the notifications before displaying them?
 translate_command='sed -u "s/M-iM-s M-rM-eM-aM-dM-y.*$/is ready/g"'
 
-#test for sudo
+
 sudo_command=""
 #do we have passwordless sudo?
+if ! sudo -n echo >/dev/null 2>&1;then
+	echo "authenticate for sudo commands"
+	sudo echo -n
+fi
+#do we have passwordless sudo now?
 if sudo -n echo >/dev/null 2>&1;then
 	sudo_command="sudo -n" #which sudo command to use, if we cannot run passwordless sudo, give user a warning
 else
