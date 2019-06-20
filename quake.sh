@@ -56,6 +56,14 @@ notify_blacklist='^Spectator' #ignore spectators
 #do we need to translate any of the notifications before displaying them?
 translate_command='sed -u "s/M-iM-s M-rM-eM-aM-dM-y.*$/is ready/g"'
 
+#test for sudo
+sudo_command=""
+#do we have passwordless sudo?
+if sudo -n echo >/dev/null 2>&1;then
+	sudo_command="sudo -n" #which sudo command to use, if we cannot run passwordless sudo, give user a warning
+	echo "warning, not all optimizations and settings can be implemented as we do not have sudo.  please run sudo before this script to authenticate."
+fi
+
 #parse white/blacklist for notifications
 grep_command='egrep --line-buffered'
 
@@ -66,12 +74,6 @@ if [ ! -p $quake_fifo ];then
 	mkfifo $quake_fifo
 fi
 
-
-sudo_command=""
-#do we have passwordless sudo?
-if sudo -n echo >/dev/null 2>&1;then
-	sudo_command="sudo -n" #which sudo command to use, non-interactive is default, this will just fail silently if sudo requires a password - comment out if your user has permission to set the nice level specified with nice_level
-fi
 
 
 #check that dir and bin actually exist
