@@ -88,14 +88,19 @@ export __GL_ALLOW_UNOFFICIAL_PROTOCOL=1 #incomplete, must have xorg config optio
 export vblank_mode=0 #no vsync
 
 
-#attempt to force the gpu to its highest clock (non nvidia)
 if [ ! -z "$sudo_command" ];then
 
+	#attempt to force the gpu to its highest clock (non nvidia)
 	echo 1 |$sudo_command tee /sys/devices/system/cpu/intel_pstate/no_turbo >/dev/null 2>&1 &
-	maxclock=$(head -n 1 /sys/devices/*/*/drm/card0/gt_boost_freq_mhz)
+	maxclock=$(head -n 1 /sys/devices/*/*/drm/card0/gt_boost_freq_mhz 2>/dev/null)
 	if [ ! -z "$maxclock" ];then
 		echo "$maxclock"|$sudo_command tee /sys/devices/*/*/drm/card0/gt_min_freq_mhz >/dev/null 2>&1 &
 	fi
+
+	#set performance governor if we can
+	for i in /sys/devices/system/cpu/cpufreq/policy*/scaling_governor;do
+		echo performance|sudo tee "$i" >/dev/null 2>&1 &
+	done
 
 fi
 
@@ -172,7 +177,7 @@ function clean_exit(){
 }
 
 #kill off children when we exit
-trap 'clean_exit;kill $(ps -o pid= --ppid $$) >/dev/null 2>&1' INT TERM EXIT
+trap 'clean_exit;kill $(ps -o pid= --ppid $$) >/dev/null 2>/dev/null' INT TERM EXIT
 
 #default arguments
 if [ -z "$*" ];then
@@ -226,7 +231,7 @@ physcores=$(egrep -e "core id" -e ^physical /proc/cpuinfo|xargs -l2 echo|sort -u
 #or use number of hardware threads
 cores=$(egrep -e "core id" -e ^processor /proc/cpuinfo|xargs -l2 echo|sort -u|wc -l)
 #number of threads spawned
-num_qthreads=$(ps --no-headers -L -o tid:1 -p ${qpid}|wc -l 2>/dev/null)
+num_qthreads=$(ps --no-headers -L -o tid:1 -p ${qpid} 2>/dev/null|wc -l 2>/dev/null)
 
 
 #only attempt to set affinity if we have enough hardware threads to handle all threads, otherwise do nothing
@@ -234,7 +239,7 @@ if [ $num_qthreads -le $cores ] && [ $bind_threads -eq 1 ];then
 
 	function set_affinity(){
 		#set thread affinity - sorted based on cpu usage so our primary threads will definitely get their own cores
-		qthreads=$(ps --no-headers -L -o pcpu:1,tid:1 -p ${qpid}|sort -nr|head -n $physcores|cut -d" " -f2 2>/dev/null)
+		qthreads=$(ps --no-headers -L -o pcpu:1,tid:1 -p ${qpid} 2>/dev/null|sort -nr|head -n $physcores|cut -d" " -f2 2>/dev/null)
 
 		#set affinity, if we run out of physical cores to pin threads to, just use 0 as these are the least cpu hungry threads anyway
 		let core=0
@@ -257,18 +262,18 @@ if [ $num_qthreads -le $cores ] && [ $bind_threads -eq 1 ];then
 		if [ $cores -gt 1 ];then
 			set_affinity
 			sleep 1
-			orig_unique=$(ps --no-headers -L -o psr:1 -p ${qpid}|uniq -u|wc -l 2>/dev/null)
+			orig_unique=$(ps --no-headers -L -o psr:1 -p ${qpid} 2>/dev/null|uniq -u|wc -l 2>/dev/null)
 			#watch to make sure we haven't respawned the threads
 			(while [ 1 ];do
 					sleep 5
-					unique=$(ps --no-headers -L -o psr:1 -p ${qpid}|uniq -u|wc -l 2>/dev/null)
+					unique=$(ps --no-headers -L -o psr:1 -p ${qpid} 2>/dev/null|uniq -u|wc -l 2>/dev/null)
 					if [ ! -z "$unique" ];then
 						if [ $unique -lt $orig_unique ];then
 							set_affinity
 						fi
 					fi
 					sleep 1
-					orig_unique=$(ps --no-headers -L -o psr:1 -p ${qpid}|uniq -u|wc -l 2>/dev/null)
+					orig_unique=$(ps --no-headers -L -o psr:1 -p ${qpid} 2>/dev/null|uniq -u|wc -l 2>/dev/null)
 				done)&
 		fi
 	fi
