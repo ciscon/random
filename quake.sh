@@ -39,11 +39,11 @@ enable_notifications="1"
 
 
 #optimization parameters
-opengl_multithreading="0" #nvidia/mesa threaded optimizations?
+opengl_multithreading="1" #nvidia/mesa threaded optimizations?
 nvidia_settings_optimizations="1" #attempt to use nvidia-settings for various optimized settings?
 bind_threads="1" #bind threads to cores?
-disable_turbo="0" #disable turbo on intel processors (sudo)
 nice_level="-5" #(sudo)
+disable_turbo="0" #disable turbo on intel processors (sudo)
 
 
 
