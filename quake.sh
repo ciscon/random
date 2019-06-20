@@ -34,7 +34,7 @@ heapsize="32768" #client default of 32MB
 client_port="2018" #choose client port, take default with 0, or random ephemeral with -1
 
 
-#enable desktop notifications through libnotify/notify-send?
+#enable desktop notifications (when users join/ready by default) through libnotify/notify-send?
 enable_notifications="1"
 
 
@@ -42,8 +42,13 @@ enable_notifications="1"
 opengl_multithreading="0" #nvidia/mesa threaded optimizations?
 nvidia_settings_optimizations="1" #attempt to use nvidia-settings for various optimized settings?
 bind_threads="1" #bind threads to cores?
-disable_turbo="0" #disable turbo on intel processors (requires passwordless sudo or will fail)
-nice_level="-12" #uses sudo_command
+disable_turbo="0" #disable turbo on intel processors (sudo)
+nice_level="-5" #(sudo)
+
+
+
+#everything after this point most likely doesn't need to be modified
+
 
 
 #set up notifications
@@ -61,7 +66,13 @@ sudo_command=""
 #do we have passwordless sudo?
 if sudo -n echo >/dev/null 2>&1;then
 	sudo_command="sudo -n" #which sudo command to use, if we cannot run passwordless sudo, give user a warning
+else
 	echo "warning, not all optimizations and settings can be implemented as we do not have sudo.  please run sudo before this script to authenticate."
+fi
+
+if ! taskset --help >/dev/null 2>&1;then
+	echo "taskset not found, we will not be able to bind threads to cores."
+	bind_threads=0
 fi
 
 #parse white/blacklist for notifications
