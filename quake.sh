@@ -54,10 +54,12 @@ translate_command='sed -u "s/M-iM-s M-rM-eM-aM-dM-y.*$/is ready/g"'
 
 
 sudo_command=""
-#do we have passwordless sudo?
-if ! sudo -n echo >/dev/null 2>&1;then
-	echo "authenticate for sudo commands"
-	sudo echo -n
+if [ "$sudo_ask" -eq 1 ];then
+	#do we have passwordless sudo?
+	if ! sudo -n echo >/dev/null 2>&1;then
+		echo "authenticate for sudo commands"
+		sudo echo -n
+	fi
 fi
 #do we have passwordless sudo now?
 if sudo -n echo >/dev/null 2>&1;then
