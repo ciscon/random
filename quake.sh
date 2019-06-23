@@ -19,7 +19,7 @@
 quake_path="/opt/quake"
 quake_exe="ezquake-linux-x86_64"
 auto_args="-no-triple-gl-buffer +connectbr nicotinelounge.com" #args to append if no arguments are given
-heapsize="32768" #client default of 32MB
+heapsize="65536" #client default of 32MB
 client_port="2018" #choose client port, take default with 0, or random ephemeral with -1
 
 
@@ -102,7 +102,6 @@ export vblank_mode=0 #no vsync
 if [ ! -z "$sudo_command" ];then
 
 	#gpu: attempt to force the gpu to its highest clock (non nvidia)
-	echo 1 |$sudo_command tee /sys/devices/system/cpu/intel_pstate/no_turbo >/dev/null 2>&1 &
 	maxclock=$(head -n 1 /sys/devices/*/*/drm/card0/gt_boost_freq_mhz 2>/dev/null)
 	if [ ! -z "$maxclock" ];then
 		echo "$maxclock"|$sudo_command tee /sys/devices/*/*/drm/card0/gt_min_freq_mhz >/dev/null 2>&1 &
