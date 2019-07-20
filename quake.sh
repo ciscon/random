@@ -33,6 +33,7 @@ sudo_ask="1"
 opengl_multithreading="1" #nvidia/mesa threaded optimizations?
 nvidia_settings_optimizations="1" #attempt to use nvidia-settings for various optimized settings?
 bind_threads="1" #bind threads to cores?
+max_threads="0" #once this number is hit, all remaining threads will be bound to this core
 nice_level="-5" #(sudo)
 disable_turbo="0" #disable turbo on intel processors (sudo)
 
@@ -255,17 +256,23 @@ num_qthreads=$(ps --no-headers -L -o tid:1 -p ${qpid} 2>/dev/null|wc -l 2>/dev/n
 #only attempt to set affinity if we have enough hardware threads to handle all threads, otherwise do nothing
 if [ $num_qthreads -le $cores ] && [ $bind_threads -eq 1 ];then
 
+	if [ $max_threads -gt 0 ];then
+		let max_threads=max_threads-1
+	else
+		max_threads=255
+	fi
+
 	function set_affinity(){
 		#set thread affinity - sorted based on cpu usage so our primary threads will definitely get their own cores
 		qthreads=$(ps --no-headers -L -o pcpu:1,tid:1 -p ${qpid} 2>/dev/null|sort -nr|head -n $physcores|cut -d" " -f2 2>/dev/null)
 
 		#set affinity, if we run out of physical cores to pin threads to, just use 0 as these are the least cpu hungry threads anyway
-		let core=0
+		local core=0
 		for thread in $qthreads;do
 			taskset -p -c $core $thread >/dev/null 2>&1
-			if [ $core -lt $physcores  ];then
+			if [ $core -lt $physcores ] && [ $core -lt $max_threads  ];then
 				let core=core+1
-			else
+			elif [ $max_threads -eq -1 ];then
 				#let the kernel decide, though we should only be looking at the first n threads in which n is the number of physical cores
 				core="-1"
 			fi
