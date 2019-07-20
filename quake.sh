@@ -30,7 +30,7 @@ enable_notifications="1"
 sudo_ask="1"
 
 #optimization parameters
-opengl_multithreading="1" #nvidia/mesa threaded optimizations?
+opengl_multithreading="0" #nvidia/mesa threaded optimizations?
 nvidia_settings_optimizations="1" #attempt to use nvidia-settings for various optimized settings?
 bind_threads="1" #bind threads to cores?
 max_threads="0" #once this number is hit, all remaining threads will be bound to this core
@@ -282,24 +282,38 @@ if [ $num_qthreads -le $cores ] && [ $bind_threads -eq 1 ];then
 		done
 	}
 
+	renice -n 20 $$ >/dev/null 2>&1
+
 	#if we got a number, proceed
 	if [[ $cores =~ ^[0-9]+$ ]];then
 		if [ $cores -gt 1 ];then
-			set_affinity
-			sleep 1
-			orig_unique=$(ps --no-headers -L -o psr:1 -p ${qpid} 2>/dev/null|uniq -u|wc -l 2>/dev/null)
+			sleep 5
+
+			rm -f /tmp/quake_taskset
+			mkfifo /tmp/quake_taskset
+			exec 3<> /tmp/quake_taskset
+
 			#watch to make sure we haven't respawned the threads
-			(while [ 1 ];do
-					sleep 5
-					unique=$(ps --no-headers -L -o psr:1 -p ${qpid} 2>/dev/null|uniq -u|wc -l 2>/dev/null)
+			(
+				while [ 1 ];do
+					taskset --all-tasks -p ${qpid}|tr -d '\n' 1>&3
+					printf '\n' 1>&3
+					read -u3 unique
+
 					if [ ! -z "$unique" ];then
-						if [ $unique -lt $orig_unique ];then
+						if [ "$unique" != "$orig_unique" ];then
+							echo set_affinity
 							set_affinity
+							sleep 5 
+
+							taskset --all-tasks -p ${qpid}|tr -d '\n' 1>&3
+							printf '\n' 1>&3
+							read -u3 orig_unique
 						fi
 					fi
-					sleep 1
-					orig_unique=$(ps --no-headers -L -o psr:1 -p ${qpid} 2>/dev/null|uniq -u|wc -l 2>/dev/null)
-				done)&
+					sleep 60
+				done
+			)&
 		fi
 	fi
 
