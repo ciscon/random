@@ -125,8 +125,8 @@ fi
 
 
 if [ $nvidia_settings_optimizations -eq 1 ];then
-	#nvidia: set max performance in case we already haven't
-	nvidia-settings -a GPUPowerMizerMode=1 >/dev/null 2>&1
+	#nvidia: set max performance in case we already haven't, must be set per gpu
+    nvidia-settings -a [gpu:0]GPUPowerMizerMode=1 >/dev/null 2>&1
 	#set performance over quality
 	nvidia-settings -a OpenGLImageSettings=3 >/dev/null 2>&1
 	#no buffer swaps
