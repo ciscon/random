@@ -16,7 +16,7 @@
 #   util-linux: /usr/bin/taskset
 
 #game vars - these most likely need to be customized
-quake_path="/opt/quake"
+quake_path="$HOME/games/quake"
 quake_exe="ezquake-linux-x86_64"
 auto_args="-no-triple-gl-buffer +connectbr nicotinelounge.com" #args to append if no arguments are given
 heapsize="65536" #client default of 32MB
@@ -247,8 +247,11 @@ sleep 5
 
 #use number of physical cores
 physcores=$(egrep -e "core id" -e ^physical /proc/cpuinfo|xargs -l2 echo|sort -u|wc -l)
+physcores=${physcores:-1}
 #or use number of hardware threads
 cores=$(egrep -e "core id" -e ^processor /proc/cpuinfo|xargs -l2 echo|sort -u|wc -l)
+cores=${cores:-physcores}
+let step=cores/physcores
 #number of threads spawned
 num_qthreads=$(ps --no-headers -L -o tid:1 -p ${qpid} 2>/dev/null|wc -l 2>/dev/null)
 
@@ -271,7 +274,7 @@ if [ $num_qthreads -le $cores ] && [ $bind_threads -eq 1 ];then
 		for thread in $qthreads;do
 			taskset -p -c $core $thread >/dev/null 2>&1
 			if [ $core -lt $physcores ] && [ $core -lt $max_threads  ];then
-				let core=core+1
+				let core=core+step
 			elif [ $max_threads -eq -1 ];then
 				#let the kernel decide, though we should only be looking at the first n threads in which n is the number of physical cores
 				core="-1"
