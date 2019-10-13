@@ -273,7 +273,7 @@ if [ $num_qthreads -le $cores ] && [ $bind_threads -eq 1 ];then
 		local core=0
 		for thread in $qthreads;do
 			taskset -p -c $core $thread >/dev/null 2>&1
-			if [ $core -lt $physcores ] && [ $core -lt $max_threads  ];then
+			if [ $core -lt $cores ] && [ $core -lt $max_threads  ];then
 				let core=core+step
 			elif [ $max_threads -eq -1 ];then
 				#let the kernel decide, though we should only be looking at the first n threads in which n is the number of physical cores
