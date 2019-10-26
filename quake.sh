@@ -223,14 +223,14 @@ if [ $client_port -lt 0 ];then
 elif [ $client_port -gt 0 ];then
 	quake_command+=" -clientport $client_port "
 fi
-notification_command=" -condebug /dev/stdout > $quake_fifo"
+notification_command=" -condebug $quake_fifo"
 
 
 full_command="nice -n $nice_level $quake_command"
 if [ $enable_notifications -eq 1 ];then
 	full_command+="$notification_command" 
 	#spawn notification command
-	(cat -v $quake_fifo | stdbuf -i0 -o0 sed 's/M-//g' |eval $grep_command | eval $translate_command | stdbuf -i0 -o0 tr -cd '[[:alnum:] \n]._-' |xargs -I% $notify_command %)&
+	(cat -v $quake_fifo | stdbuf -i0 -o0 sed 's/M-//g' | eval $grep_command | eval $translate_command | stdbuf -i0 -o0 tr -cd '[[:alnum:] \n]._-' | xargs -I% $notify_command %)&
 fi
 
 eval "$full_command 2>&1" &
