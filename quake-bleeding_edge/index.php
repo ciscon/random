@@ -124,7 +124,8 @@ if ($_FILES["file"]["name"]){
 
 if ($_GET['action']){
 
-	$_action='action: '.$_GET['action'];
+	$action=$_GET['action'];
+	$_action='action: '.$action;
 	$_status='none';
 	$_port=(int)$_GET['port'];
 	$nolog=false;
@@ -134,18 +135,15 @@ if ($_GET['action']){
 	echo "<center><pre>";
 
 	exec($quakedir.'/scripts/status.sh',$output,$status);
-
-	if ($_GET['action'] == 'status'){
+	if ($action == 'status'){
 		$nolog=true; //don't log status requests
 		$output='<font color=red>'.implode("\n",$output).'</font>';
-	} else if ($_GET['action'] == 'start'){
+	} else if ($action == 'start'){
 		if ($status == 1){echo 'Already running, not doing anything.';exit;}
-		exec($quakedir.'/scripts/start_servers.sh '.escapeshellarg($port),$output,$status);
-		$output=implode("\n",$output);
+		$output=shell_exec($quakedir.'/scripts/start_servers.sh '.$_port);
 	} else {
 		if ($status == 0 ){echo 'Already stopped.  Doing it anyway.';exit;}
-		exec($quakedir.'/scripts/stop_servers.sh '.escapeshellarg($port),$output,$status);
-		$output=implode("\n",$output);
+		$output=shell_exec($quakedir.'/scripts/stop_servers.sh '.$_port);
 	}
 
 	echo "$output";
@@ -211,12 +209,12 @@ function updatestatus (action, port) {
 	$("button").prop("disabled",true);
 	$("#header").html("<center><b>Updating...</b></center>");
 	$("#status").html("<center>...</center>");
-	$.ajax({url: "/armherpes/quakecontrol/index.php?action="+action, success: function(result){
+	$.ajax({url: "/armherpes/quakecontrol/index.php?action="+action+"&port="+port, success: function(result){
 			$("#status").html(result);
 			updatelog();
 			setTimeout(
 					function() {
-					$.ajax({url: "/armherpes/quakecontrol/index.php?action=status&port=port", 
+					$.ajax({url: "/armherpes/quakecontrol/index.php?action=status", 
 							success: function(result){
 							$("#status").append(result);
 							$("#header").html("<center><b>Server Status</b></center>");
