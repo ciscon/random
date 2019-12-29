@@ -126,6 +126,7 @@ if ($_GET['action']){
 
 	$_action='action: '.$_GET['action'];
 	$_status='none';
+	$_port=(int)$_GET['port'];
 	$nolog=false;
 
 	if ($_action === 'action: getlog') { showlog(); exit(0); }
@@ -139,11 +140,11 @@ if ($_GET['action']){
 		$output='<font color=red>'.implode("\n",$output).'</font>';
 	} else if ($_GET['action'] == 'start'){
 		if ($status == 1){echo 'Already running, not doing anything.';exit;}
-		exec($quakedir.'/scripts/start_servers.sh',$output,$status);
+		exec($quakedir.'/scripts/start_servers.sh '.escapeshellarg($port),$output,$status);
 		$output=implode("\n",$output);
 	} else {
 		if ($status == 0 ){echo 'Already stopped.  Doing it anyway.';exit;}
-		exec($quakedir.'/scripts/stop_servers.sh',$output,$status);
+		exec($quakedir.'/scripts/stop_servers.sh '.escapeshellarg($port),$output,$status);
 		$output=implode("\n",$output);
 	}
 
@@ -205,7 +206,7 @@ error: function(){
 });
 }
 
-function updatestatus (action) {
+function updatestatus (action, port) {
 	$("input").prop("disabled",true);
 	$("button").prop("disabled",true);
 	$("#header").html("<center><b>Updating...</b></center>");
@@ -215,7 +216,7 @@ function updatestatus (action) {
 			updatelog();
 			setTimeout(
 					function() {
-					$.ajax({url: "/armherpes/quakecontrol/index.php?action=status", 
+					$.ajax({url: "/armherpes/quakecontrol/index.php?action=status&port=port", 
 							success: function(result){
 							$("#status").append(result);
 							$("#header").html("<center><b>Server Status</b></center>");
@@ -276,14 +277,17 @@ echo "</pre>";
 echo '</center></div>';
 
 if(!$viewonly){
-	echo '
-		<div id=control class=center><center>';
 
-	echo "<input onclick='updatestatus(\"start\");' id=start type=button value='Start Server(s)'>";
-	echo "&nbsp&nbsp";
-	echo "<input onclick='updatestatus(\"stop\");' id=stop type=button value='Stop Server(s)'>";
+	$scripts=glob("$quakedir/run/*.sh");
+	foreach($scripts as $index=>$script){
+		echo '<div id=control class=center><center>';
+		preg_match('/[0-9]+/',$script,$port);
+		echo "<input onclick='updatestatus(\"start\",".$port[0].");' id=start type=button value='Start Server ".$port[0]."'>";
+		echo "&nbsp&nbsp";
+		echo "<input onclick='updatestatus(\"stop\",".$port[0].");' id=stop type=button value='Stop Server ".$port[0]."'>";
+		echo '</center></div>';
+	}
 
-	echo '</center></div>';
 
 	echo '<br>
 		<div id=header class=center><center>
