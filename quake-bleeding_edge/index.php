@@ -19,7 +19,7 @@ function getstatus(&$status,&$output){
 	global $quakedir;
 	$status=1;
 	exec($quakedir.'/scripts/status.sh',$output,$status);
-	$output='<font color=red>'.implode('\n',$output).'</font>';
+	$output='<font color=red>'.implode("\n",$output).'</font>';
 }
 
 function showlog(){
