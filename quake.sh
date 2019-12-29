@@ -20,7 +20,7 @@ quake_path="$HOME/games/quake"
 quake_exe="ezquake-linux-x86_64"
 auto_args="-no-triple-gl-buffer +connectbr nicotinelounge.com" #args to append if no arguments are given
 heapsize="65536" #client default of 32MB
-client_port="2018" #choose client port, take default with 0, or random ephemeral with -1
+client_port="-1" #choose client port, take default with 0, or random ephemeral with -1
 
 
 #enable desktop notifications (when users join/ready by default) through libnotify/notify-send?
@@ -46,13 +46,14 @@ disable_turbo="0" #disable turbo on intel processors (sudo)
 #set up notifications
 notify_command="notify-send --hint=int:transient:2 -t 1500 -i /opt/quake/quake.png"
 
-notify_whitelist='entered the game$
+notify_whitelist='entered the game
 is ready'
 notify_blacklist='^Spectator' #ignore spectators
 
 #do we need to translate any of the notifications before displaying them?
-translate_command='sed -u "s/M-iM-s M-rM-eM-aM-dM-y.*$/is ready/g"'
-
+#isready=$'\362\345\341\344\371'
+isready=$'\351\363.*\362\345\341\344\371'
+translate_command='sed -u "s/$isready/is ready\n/g;s/[^a-zA-Z0-9 _]//g"'
 
 sudo_command=""
 if [ "$sudo_ask" -eq 1 ];then
@@ -230,7 +231,7 @@ full_command="nice -n $nice_level $quake_command"
 if [ $enable_notifications -eq 1 ];then
 	full_command+="$notification_command" 
 	#spawn notification command
-	(cat -v $quake_fifo | stdbuf -i0 -o0 sed 's/M-//g' | eval $grep_command | eval $translate_command | stdbuf -i0 -o0 tr -cd '[[:alnum:] \n]._-' | xargs -I% $notify_command %)&
+	(cat $quake_fifo | eval $translate_command | stdbuf -i0 -o0 -e0 tr -dc '\0-\177' | eval $grep_command | xargs -I% $notify_command %)&
 fi
 
 eval "$full_command 2>&1" &
