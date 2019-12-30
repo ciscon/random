@@ -1,6 +1,7 @@
 #!/bin/bash
 
 quakepath="/opt/quake-bleeding"
+quakeuser="ciscon"
 cd "$quakepath"
 scriptbase="quake_port"
 portnum="$1"
@@ -10,7 +11,7 @@ name="quake_bleeding-${portnum}"
 if [ ! -z "$port" ];then
 
 	if [ $(id -u ) != 1000 ];then
-		su -c "screen -dmS $name $quakepath/run/$port" ciscon > /dev/null &
+		su -c "screen -dmS $name $quakepath/run/$port" $quakeuser > /dev/null &
 	else
 		screen -dmS $name $quakepath/run/$port > /dev/null &
 	fi
