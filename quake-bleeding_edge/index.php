@@ -18,7 +18,7 @@
 $quakedir="/opt/quake-bleeding";
 $logfile="bleeding_log.txt";
 $admin_user='bleederadmin';
-$self_uri=$_SERVER[REQUEST_URI];
+$self_uri=strtok($_SERVER["REQUEST_URI"],'?');
 global $quakedir, $logfile, $viewonly;
 
 
