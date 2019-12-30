@@ -2,13 +2,15 @@
 
 $quakedir="/opt/quake-bleeding";
 $logfile="bleeding_log.txt";
-$viewonly_user='bleeder';
+$admin_user='bleederadmin';
+$self_uri=$_SERVER[REQUEST_URI];
 global $quakedir, $logfile, $viewonly;
 
 
-$viewonly=false;
-if ($_SERVER['PHP_AUTH_USER'] === $viewonly_user){
-	$viewonly=true;
+$viewonly=true;
+if ($_SERVER['PHP_AUTH_USER'] === $admin_user){
+	$viewonly=false;
+}else{
 	if ($_GET['action'] && $_GET['action'] !== 'status'&& $_GET['action'] !== 'getlog'){
 		$_GET['action']=null;
 	}
@@ -195,7 +197,7 @@ border: solid thin #a1a1a1;
 
 
 function updatelog(){
-	$.ajax({url: "/armherpes/quakecontrol/index.php?action=getlog", success: function(result){
+	$.ajax({url: "'.$self_uri.'?action=getlog", success: function(result){
 			$("#log").html(result);
 			},
 error: function(){
@@ -209,12 +211,12 @@ function updatestatus (action, port) {
 	$("button").prop("disabled",true);
 	$("#header").html("<center><b>Updating...</b></center>");
 	$("#status").html("<center>...</center>");
-	$.ajax({url: "/armherpes/quakecontrol/index.php?action="+action+"&port="+port, success: function(result){
+	$.ajax({url: "'.$self_uri.'?action="+action+"&port="+port, success: function(result){
 			$("#status").html(result);
 			updatelog();
 			setTimeout(
 					function() {
-					$.ajax({url: "/armherpes/quakecontrol/index.php?action=status", 
+					$.ajax({url: "'.$self_uri.'?action=status", 
 							success: function(result){
 							$("#status").append(result);
 							$("#header").html("<center><b>Server Status</b></center>");
