@@ -17,10 +17,10 @@ if ($_SERVER['PHP_AUTH_USER'] === $admin_user){
 	$_FILES=null;
 }
 
-function getstatus(&$status,&$output){
+function getstatus(&$status,&$output,$port=null){
 	global $quakedir;
 	$status=1;
-	exec($quakedir.'/scripts/status.sh',$output,$status);
+	exec($quakedir.'/scripts/status.sh '.$port,$output,$status);
 	$output='<font color=red>'.implode("\n",$output).'</font>';
 }
 
@@ -136,7 +136,7 @@ if ($_GET['action']){
 
 	echo "<center><pre>";
 
-	exec($quakedir.'/scripts/status.sh',$output,$status);
+	exec($quakedir.'/scripts/status.sh '.$_port,$output,$status);
 	if ($action == 'status'){
 		$nolog=true; //don't log status requests
 		$output='<font color=red>'.implode("\n",$output).'</font>';
