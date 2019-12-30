@@ -6,7 +6,7 @@ portnum_incoming="$1"
 
 anyrunning=0
 
-for port in /opt/quake-bleeding/run/*;do
+for port in "${quakepath}/run/*";do
 	portrunning=false
 	port=$(basename $port)
 	name="${port%.*}"
