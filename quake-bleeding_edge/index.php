@@ -296,7 +296,7 @@ if(!$viewonly){
 	$scripts=glob("$quakedir/run/*.sh");
 	foreach($scripts as $index=>$script){
 		echo '<div id=control class=center><center>';
-		preg_match('/[0-9]+/',$script,$port);
+		preg_match('/[0-9]+/',basename($script),$port);
 		echo "<input onclick='updatestatus(\"start\",".$port[0].");' id=start type=button value='Start Server ".$port[0]."'>";
 		echo "&nbsp&nbsp";
 		echo "<input onclick='updatestatus(\"stop\",".$port[0].");' id=stop type=button value='Stop Server ".$port[0]."'>";
