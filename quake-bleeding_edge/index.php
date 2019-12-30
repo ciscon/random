@@ -1,6 +1,9 @@
 <?php
 
 /*
+ * requirements:
+ * 	quakestat
+ * 	bsputil (https://github.com/ericwa/ericw-tools)
  *
  * directory structure layout
  *
@@ -116,7 +119,7 @@ if ($_FILES["file"]["name"]){
 	} else {
 		if (move_uploaded_file($_FILES["file"]["tmp_name"], $target_file)) {
 			echo "The file ". basename( $_FILES["file"]["name"]). " has been uploaded.\n";
-			exec('/opt/bin/bsputil --check "'.$target_file.'" 2>&1',$output,$status);
+			exec('bsputil --check "'.$target_file.'" 2>&1',$output,$status);
 			if ($status != 0){
 				$_status = 'file uploaded and moved to map directory, but there were bsputil errors';
 				echo "\nBSP Invalid!\n";
