@@ -1,5 +1,20 @@
 <?php
 
+/*
+ *
+ * directory structure layout
+ *
+ * quake directory:
+ * 	run:
+ * 		quake_port27500.sh
+ * 	scripts:
+ * 		start_servers.sh
+ * 		stop_servers.sh
+ * 		status.sh
+ * 	qw/maps:
+ * 		*must be readable/writable by apache user/group
+ *
+ * */
 $quakedir="/opt/quake-bleeding";
 $logfile="bleeding_log.txt";
 $admin_user='bleederadmin';
