@@ -242,6 +242,10 @@ sleep 1
 
 qpid=$(pgrep -f $quake_exe)
 
+if [ ! -z "$sudo_command" ];then
+	$sudo_command renice -n $nice_level ${qpid} >/dev/null 2>&1 #attempt to set nice level
+fi
+
 #allow threads to spawn
 sleep 5
 
