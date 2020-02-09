@@ -32,7 +32,7 @@ sudo_ask="1"
 #optimization parameters
 opengl_multithreading="0" #nvidia/mesa threaded optimizations?
 nvidia_settings_optimizations="1" #attempt to use nvidia-settings for various optimized settings?
-bind_threads="1" #bind threads to cores?
+bind_threads="0" #bind threads to cores?
 max_threads="0" #once this number is hit, all remaining threads will be bound to this core
 nice_level="-5" #(sudo)
 disable_turbo="0" #disable turbo on intel processors (sudo)
