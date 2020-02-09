@@ -94,10 +94,13 @@ if [ ! -d "$quake_path" ] || [ ! -f "$quake_path/$quake_exe" ];then
 fi
 
 #set up environment:
+#nvidia
 export __GL_YIELD="NOTHING" #never yield
 export __GL_GSYNC_ALLOWED=0 #no gsync
 export __GL_SYNC_TO_VBLANK=0 #no vsync
 export __GL_ALLOW_UNOFFICIAL_PROTOCOL=1 #incomplete, must have xorg config option AllowUnofficialGLXProtocol
+export __GL_MaxFramesAllowed=0 #do not pre-render frames
+#generic
 export vblank_mode=0 #no vsync
 
 
@@ -130,16 +133,16 @@ if [ $nvidia_settings_optimizations -eq 1 ];then
 	nvidia-settings -a "[gpu:0]/GPUPowerMizerMode=1" >/dev/null 2>&1
 	#set performance over quality
 	nvidia-settings -a OpenGLImageSettings=3 >/dev/null 2>&1
-	#no buffer swaps
-	nvidia-settings -a AllowFlipping=0 >/dev/null 2>&1
+	#buffer swaps
+	nvidia-settings -a AllowFlipping=1 >/dev/null 2>&1
 	#vsync
 	nvidia-settings -a SyncToVBlank=0 >/dev/null 2>&1
 	#gl_clamp_to_edge
 	nvidia-settings -a TextureClamping=0 > /dev/null 2>&1
 
-	#enable shader cache
-	export __GL_SHADER_DISK_CACHE_PATH=/tmp/nvidia_shader_cache
-	mkdir -p /tmp/nvidia_shader_cache
+	#enable shader cache?
+	#export __GL_SHADER_DISK_CACHE_PATH=/tmp/nvidia_shader_cache
+	#mkdir -p /tmp/nvidia_shader_cache
 fi
 
 #opengl multithreading
