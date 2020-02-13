@@ -31,6 +31,7 @@ sudo_ask="1"
 #optimization parameters
 opengl_multithreading="0" #nvidia/mesa threaded optimizations?
 nvidia_prerendered_frames="0" #as of the 4xx driver series, 0 is application controlled (2).  1 is the lowest latency setting, but will cause a significant fps drop
+nvidia_allow_page_flipping="1"
 nvidia_settings_optimizations="1" #attempt to use nvidia-settings for various optimized settings?
 bind_threads="0" #bind threads to cores?
 max_threads="0" #once this number is hit, all remaining threads will be bound to this core
@@ -132,7 +133,7 @@ if [ $nvidia_settings_optimizations -eq 1 ];then
 	#set performance over quality
 	nvidia-settings -a OpenGLImageSettings=3 >/dev/null 2>&1
 	#buffer swaps
-	nvidia-settings -a AllowFlipping=1 >/dev/null 2>&1
+	nvidia-settings -a AllowFlipping=${nvidia_allow_page_flipping} >/dev/null 2>&1
 	#vsync
 	nvidia-settings -a SyncToVBlank=0 >/dev/null 2>&1
 	#gl_clamp_to_edge
