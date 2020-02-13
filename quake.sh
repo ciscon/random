@@ -22,7 +22,6 @@ auto_args="-no-triple-gl-buffer +connectbr nicotinelounge.com" #args to append i
 heapsize="65536" #client default of 32MB
 client_port="-1" #choose client port, take default with 0, or random ephemeral with -1
 
-
 #enable desktop notifications (when users join/ready by default) through libnotify/notify-send?
 enable_notifications="1"
 
@@ -31,6 +30,7 @@ sudo_ask="1"
 
 #optimization parameters
 opengl_multithreading="0" #nvidia/mesa threaded optimizations?
+nvidia_prerendered_frames="0" #as of the 4xx driver series, 0 is application controlled (2).  1 is the lowest latency setting, but will cause a significant fps drop
 nvidia_settings_optimizations="1" #attempt to use nvidia-settings for various optimized settings?
 bind_threads="0" #bind threads to cores?
 max_threads="0" #once this number is hit, all remaining threads will be bound to this core
@@ -38,9 +38,7 @@ nice_level="-5" #(sudo)
 disable_turbo="0" #disable turbo on intel processors (sudo)
 
 
-
 #everything after this point most likely doesn't need to be modified
-
 
 
 #set up notifications
@@ -99,7 +97,7 @@ export __GL_YIELD="NOTHING" #never yield
 export __GL_GSYNC_ALLOWED=0 #no gsync
 export __GL_SYNC_TO_VBLANK=0 #no vsync
 export __GL_ALLOW_UNOFFICIAL_PROTOCOL=1 #incomplete, must have xorg config option AllowUnofficialGLXProtocol
-export __GL_MaxFramesAllowed=0 #do not pre-render frames
+export __GL_MaxFramesAllowed=${nvidia_prerendered_frames} #number of pre-rendered frames
 #generic
 export vblank_mode=0 #no vsync
 
@@ -139,10 +137,6 @@ if [ $nvidia_settings_optimizations -eq 1 ];then
 	nvidia-settings -a SyncToVBlank=0 >/dev/null 2>&1
 	#gl_clamp_to_edge
 	nvidia-settings -a TextureClamping=0 > /dev/null 2>&1
-
-	#enable shader cache?
-	#export __GL_SHADER_DISK_CACHE_PATH=/tmp/nvidia_shader_cache
-	#mkdir -p /tmp/nvidia_shader_cache
 fi
 
 #opengl multithreading
