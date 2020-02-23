@@ -9,11 +9,26 @@ shuffle=1
 firstmap="ultrav"
 
 maps="
+croctear 10
+e4m3 10
+e1m2 8
+e1m5 8
+schloss 8
+zed2 6
+dark-terror-ffa 5
+dark-storm-ffa 5
+four 5
+e1m7 5
+#doomed 5
+travelert6 5
+jvx1 5
+blizz2 3
+#rwild 3
+spellsgate 3
 spinev2 3
 shifter 3
 ztndm5 2
 burialb2 0 14
-rwild 3
 qwdm1 3
 ztndm4 2
 aerowalk 0 14
@@ -21,37 +36,34 @@ dm2 3
 debello 3
 ztndm2 4
 p3a 2
-a2 2
-pkeg1
+a2 3
+pkeg1 2
 river 3
 ztndm3
 efdm8 3
 rf2 2
 subterfuge 2
 spitfire 3
-zen 3 10
 ztndm6 3
-trw 3
+trw 2
 ferrum 3
 bravado 0 14
 efdm10 3
-skullc 0 14
+skull666 0 14
 factoryx 4
-q1q3thunderstruck 4
 utressor 3
 agenda 2
 lacrima 3
-zed2 3
 bless 3 14
-croctear 14
-warzone 2
+warzone 2 14
+catalyst 2
 "
 
 shuffle_com="cat"
 if [ "$shuffle" -eq 1 ];then
 	shuffle_com="shuf"
 fi
-shuffled=$(echo "$maps"|sort -u|$shuffle_com)
+shuffled=$(echo "$maps"|sort -u|grep --color=never -v '^#'|$shuffle_com)
 
 newmaps=$(echo -e "${firstmap}\n${shuffled}")
 

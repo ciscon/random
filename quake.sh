@@ -17,7 +17,7 @@
 
 #game vars - these most likely need to be customized
 quake_path="$HOME/games/quake"
-quake_exe="ezquake-linux-x86_64"
+quake_exe="ezquake-linux-x86_64-std"
 auto_args="-no-triple-gl-buffer +connectbr nicotinelounge.com" #args to append if no arguments are given
 heapsize="65536" #client default of 32MB
 client_port="-1" #choose client port, take default with 0, or random ephemeral with -1
