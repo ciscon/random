@@ -43,7 +43,7 @@ disable_turbo="0" #disable turbo on intel processors (sudo)
 
 
 #set up notifications
-notify_command="notify-send --hint=int:transient:2 -t 1500 -i /opt/quake/quake.png"
+notify_command="notify-send --hint=transient:2 -t 1500 -i /opt/quake/quake.png"
 
 notify_whitelist='entered the game
 is ready'
