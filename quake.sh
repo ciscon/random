@@ -34,6 +34,7 @@ nvidia_prerendered_frames="0" #as of the 4xx driver series, 0 is application con
 nvidia_allow_page_flipping="1"
 nvidia_settings_optimizations="1" #attempt to use nvidia-settings for various optimized settings?
 bind_threads="0" #bind threads to cores?
+bind_threads_check_interval="99999" #time in seconds to way between checking that threads are still bound properly
 max_threads="0" #once this number is hit, all remaining threads will be bound to this core
 nice_level="-5" #(sudo)
 disable_turbo="0" #disable turbo on intel processors (sudo)
@@ -317,7 +318,7 @@ if [ $num_qthreads -le $cores ] && [ $bind_threads -eq 1 ];then
 							read -u3 orig_unique
 						fi
 					fi
-					sleep 60
+					sleep $bind_threads_check_interval
 				done
 			)&
 		fi
