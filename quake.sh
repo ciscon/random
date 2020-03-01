@@ -192,6 +192,9 @@ function clean_exit(){
 
 	#kill child processes
 	kill $(jobs -p) >/dev/null 2>&1
+	sleep 1
+	kill -9 -$$ >/dev/null 2>&1
+
 
 }
 
