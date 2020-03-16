@@ -36,8 +36,8 @@ nvidia_allow_page_flipping="1"
 nvidia_settings_optimizations="1" #attempt to use nvidia-settings for various optimized settings?
 nice_level="-5" #(sudo)
 disable_turbo="0" #disable turbo on intel processors (sudo)
-set_affinity="1"
-affinity_cores="2,3"
+set_affinity="0" #set process affinity
+affinity_cores="2,3" #cores to use for process and underlying threads, comma separated list (no spaces)
 
 #deprecated
 #bind_threads="0" #bind threads to cores?
