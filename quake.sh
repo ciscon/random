@@ -2,10 +2,11 @@
 #
 # source: https://raw.githubusercontent.com/ciscon/random/master/quake.sh
 #
-# run quake with libnotify notifications (when players are ready/enter by default), bind individual threads to physical cores, and attempt some performance tweaks
+# run quake with libnotify notifications (when players are ready/enter by default), attempt performance tweaks for various gpus, set affinity of quake process
+#    depprecated: bind individual threads to physical cores, and attempt some performance tweaks
 #  
 #
-# note: for everything to work, user must have already authenticated sudo in the shell, or have sudo permission without a password
+# note: for everything to work, user must have already authenticated sudo in the shell, or have sudo permission without a password and supporting tools must exist
 #       if sudo does not exist or is not configured properly, commands will silently fail, though the user will be asked to authenticate.
 #
 # to monitor core usage: watch -n .5 'ps -L -o pid,tid,%cpu,comm,psr -p `pgrep ezquake-linux`'
@@ -33,12 +34,15 @@ opengl_multithreading="0" #nvidia/mesa threaded optimizations?
 nvidia_prerendered_frames="0" #as of the 4xx driver series, 0 is application controlled (2).  1 is the lowest latency setting, but will cause a significant fps drop
 nvidia_allow_page_flipping="1"
 nvidia_settings_optimizations="1" #attempt to use nvidia-settings for various optimized settings?
-bind_threads="0" #bind threads to cores?
-bind_threads_check_interval="99999" #time in seconds to way between checking that threads are still bound properly
-max_threads="0" #once this number is hit, all remaining threads will be bound to this core
 nice_level="-5" #(sudo)
 disable_turbo="0" #disable turbo on intel processors (sudo)
+set_affinity="1"
+affinity_cores="2,3"
 
+#deprecated
+#bind_threads="0" #bind threads to cores?
+#bind_threads_check_interval="99999" #time in seconds to way between checking that threads are still bound properly
+#max_threads="0" #once this number is hit, all remaining threads will be bound to this core
 
 #everything after this point most likely doesn't need to be modified
 
@@ -71,8 +75,9 @@ else
 fi
 
 if ! taskset --help >/dev/null 2>&1;then
-	echo "taskset not found, we will not be able to bind threads to cores."
-	bind_threads=0
+	echo "taskset not found, we will not be able to set affinity."
+	set_affinity=0
+	#bind_threads=0
 fi
 
 #parse white/blacklist for notifications
@@ -187,9 +192,6 @@ function clean_exit(){
 		echo 0 |$sudo_command tee /sys/devices/system/cpu/intel_pstate/no_turbo >/dev/null 2>&1 &
 	fi
 
-	#set wmname back
-	wmname "" >/dev/null 2>&1&
-
 	#kill child processes
 	kill $(jobs -p) >/dev/null 2>&1
 	sleep 1
@@ -229,7 +231,13 @@ fi
 notification_command=" -condebug $quake_fifo"
 
 
-full_command="nice -n $nice_level $quake_command"
+if [ $set_affinity -eq 1 ];then
+	full_command="taskset -c $affinity_cores " 
+else
+	full_command=""
+fi
+
+full_command+="nice -n $nice_level $quake_command"
 if [ $enable_notifications -eq 1 ];then
 	full_command+="$notification_command" 
 	#spawn notification command
@@ -248,86 +256,90 @@ if [ ! -z "$sudo_command" ];then
 	$sudo_command renice -n $nice_level ${qpid} >/dev/null 2>&1 #attempt to set nice level
 fi
 
-#allow threads to spawn
-sleep 5
 
 
-#use number of physical cores
-physcores=$(egrep -e "core id" -e ^physical /proc/cpuinfo|xargs -l2 echo|sort -u|wc -l)
-physcores=${physcores:-1}
-#or use number of hardware threads
-cores=$(egrep -e "core id" -e ^processor /proc/cpuinfo|xargs -l2 echo|sort -u|wc -l)
-cores=${cores:-physcores}
-let step=cores/physcores
-#number of threads spawned
-num_qthreads=$(ps --no-headers -L -o tid:1 -p ${qpid} 2>/dev/null|wc -l 2>/dev/null)
+#deprecated
 
-
-#only attempt to set affinity if we have enough hardware threads to handle all threads, otherwise do nothing
-if [ $num_qthreads -le $cores ] && [ $bind_threads -eq 1 ];then
-
-	if [ $max_threads -gt 0 ];then
-		let max_threads=max_threads-1
-	else
-		max_threads=255
-	fi
-
-	function set_affinity(){
-		#set thread affinity - sorted based on cpu usage so our primary threads will definitely get their own cores
-		qthreads=$(ps --no-headers -L -o pcpu:1,tid:1 -p ${qpid} 2>/dev/null|sort -nr|head -n $physcores|cut -d" " -f2 2>/dev/null)
-
-		#set affinity, if we run out of physical cores to pin threads to, just use 0 as these are the least cpu hungry threads anyway
-		local core=0
-		for thread in $qthreads;do
-			taskset -p -c $core $thread >/dev/null 2>&1
-			if [ $core -lt $cores ] && [ $core -lt $max_threads  ];then
-				let core=core+step
-			elif [ $max_threads -eq -1 ];then
-				#let the kernel decide, though we should only be looking at the first n threads in which n is the number of physical cores
-				core="-1"
-			fi
-			if [ ! -z "$sudo_command" ];then
-				$sudo_command renice -n $nice_level ${thread} >/dev/null 2>&1 #attempt to set nice level
-			fi
-		done
-	}
-
-	renice -n 20 $$ >/dev/null 2>&1
-
-	#if we got a number, proceed
-	if [[ $cores =~ ^[0-9]+$ ]];then
-		if [ $cores -gt 1 ];then
-			sleep 5
-
-			rm -f /tmp/quake_taskset
-			mkfifo /tmp/quake_taskset
-			exec 3<> /tmp/quake_taskset
-
-			#watch to make sure we haven't respawned the threads
-			(
-				while [ 1 ];do
-					taskset --all-tasks -p ${qpid}|tr -d '\n' 1>&3
-					printf '\n' 1>&3
-					read -u3 unique
-
-					if [ ! -z "$unique" ];then
-						if [ "$unique" != "$orig_unique" ];then
-							echo set_affinity
-							set_affinity
-							sleep 5 
-
-							taskset --all-tasks -p ${qpid}|tr -d '\n' 1>&3
-							printf '\n' 1>&3
-							read -u3 orig_unique
-						fi
-					fi
-					sleep $bind_threads_check_interval
-				done
-			)&
-		fi
-	fi
-
-fi
+##allow threads to spawn
+#sleep 5
+#
+#
+##use number of physical cores
+#physcores=$(egrep -e "core id" -e ^physical /proc/cpuinfo|xargs -l2 echo|sort -u|wc -l)
+#physcores=${physcores:-1}
+##or use number of hardware threads
+#cores=$(egrep -e "core id" -e ^processor /proc/cpuinfo|xargs -l2 echo|sort -u|wc -l)
+#cores=${cores:-physcores}
+#let step=cores/physcores
+##number of threads spawned
+#num_qthreads=$(ps --no-headers -L -o tid:1 -p ${qpid} 2>/dev/null|wc -l 2>/dev/null)
+#
+#
+##only attempt to set affinity if we have enough hardware threads to handle all threads, otherwise do nothing
+#if [ $num_qthreads -le $cores ] && [ $bind_threads -eq 1 ];then
+#
+#	if [ $max_threads -gt 0 ];then
+#		let max_threads=max_threads-1
+#	else
+#		max_threads=255
+#	fi
+#
+#	function set_affinity(){
+#		#set thread affinity - sorted based on cpu usage so our primary threads will definitely get their own cores
+#		qthreads=$(ps --no-headers -L -o pcpu:1,tid:1 -p ${qpid} 2>/dev/null|sort -nr|head -n $physcores|cut -d" " -f2 2>/dev/null)
+#
+#		#set affinity, if we run out of physical cores to pin threads to, just use 0 as these are the least cpu hungry threads anyway
+#		local core=0
+#		for thread in $qthreads;do
+#			taskset -p -c $core $thread >/dev/null 2>&1
+#			if [ $core -lt $cores ] && [ $core -lt $max_threads  ];then
+#				let core=core+step
+#			elif [ $max_threads -eq -1 ];then
+#				#let the kernel decide, though we should only be looking at the first n threads in which n is the number of physical cores
+#				core="-1"
+#			fi
+#			if [ ! -z "$sudo_command" ];then
+#				$sudo_command renice -n $nice_level ${thread} >/dev/null 2>&1 #attempt to set nice level
+#			fi
+#		done
+#	}
+#
+#	renice -n 20 $$ >/dev/null 2>&1
+#
+#	#if we got a number, proceed
+#	if [[ $cores =~ ^[0-9]+$ ]];then
+#		if [ $cores -gt 1 ];then
+#			sleep 5
+#
+#			rm -f /tmp/quake_taskset
+#			mkfifo /tmp/quake_taskset
+#			exec 3<> /tmp/quake_taskset
+#
+#			#watch to make sure we haven't respawned the threads
+#			(
+#				while [ 1 ];do
+#					taskset --all-tasks -p ${qpid}|tr -d '\n' 1>&3
+#					printf '\n' 1>&3
+#					read -u3 unique
+#
+#					if [ ! -z "$unique" ];then
+#						if [ "$unique" != "$orig_unique" ];then
+#							echo set_affinity
+#							set_affinity
+#							sleep 5 
+#
+#							taskset --all-tasks -p ${qpid}|tr -d '\n' 1>&3
+#							printf '\n' 1>&3
+#							read -u3 orig_unique
+#						fi
+#					fi
+#					sleep $bind_threads_check_interval
+#				done
+#			)&
+#		fi
+#	fi
+#
+#fi
 
 wait $real_qpid
 
