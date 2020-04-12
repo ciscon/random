@@ -19,8 +19,9 @@
 #game vars - these most likely need to be customized
 quake_path="$HOME/games/quake"
 quake_exe="ezquake-linux-x86_64-std"
-auto_args="-no-triple-gl-buffer +connectbr nicotinelounge.com" #args to append if no arguments are given
-heapsize="65536" #client default of 32MB
+auto_args="+connectbr nicotinelounge.com" #args to append if no arguments are given
+always_args="-no-triple-gl-buffer" #always prepend these arguments
+mem="128" #client default is 32MB
 client_port="-1" #choose client port, take default with 0, or random ephemeral with -1
 
 #enable desktop notifications (when users join/ready by default) through libnotify/notify-send?
@@ -221,7 +222,7 @@ IFS=$OLDIFS
 
 
 #spawn quake process and parse stdout for notifications
-quake_command="$quake_path/$quake_exe $args -heapsize $heapsize"
+quake_command="$quake_path/$quake_exe $always_args $args -mem $mem"
 
 if [ $client_port -lt 0 ];then
 	quake_command+=" -clientport 0 "
