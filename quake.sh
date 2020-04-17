@@ -18,7 +18,7 @@
 
 #game vars - these most likely need to be customized
 quake_path="$HOME/games/quake"
-quake_exe="ezquake-linux-x86_64-std"
+quake_exe="ezquake-linux-x86_64"
 auto_args="+connectbr nicotinelounge.com" #args to append if no arguments are given
 always_args="-no-triple-gl-buffer" #always prepend these arguments
 mem="128" #client default is 32MB
@@ -33,7 +33,7 @@ sudo_ask="1"
 #optimization parameters
 opengl_multithreading="0" #nvidia/mesa threaded optimizations?
 nvidia_prerendered_frames="0" #as of the 4xx driver series, 0 is application controlled (2).  1 is the lowest latency setting, but will cause a significant fps drop
-nvidia_allow_page_flipping="1"
+nvidia_allow_page_flipping="0"
 nvidia_settings_optimizations="1" #attempt to use nvidia-settings for various optimized settings?
 nice_level="-5" #(sudo)
 disable_turbo="0" #disable turbo on intel processors (sudo)
@@ -144,7 +144,7 @@ if [ $nvidia_settings_optimizations -eq 1 ];then
 	#vsync
 	nvidia-settings -a SyncToVBlank=0 >/dev/null 2>&1
 	#gl_clamp_to_edge
-	nvidia-settings -a TextureClamping=0 > /dev/null 2>&1
+	nvidia-settings -a TextureClamping=1 > /dev/null 2>&1
 fi
 
 #opengl multithreading
