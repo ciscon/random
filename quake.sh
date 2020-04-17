@@ -17,28 +17,28 @@
 #   util-linux: /usr/bin/taskset
 
 #game vars - these most likely need to be customized
-quake_path="$HOME/games/quake"
-quake_exe="ezquake-linux-x86_64"
-auto_args="+connectbr nicotinelounge.com" #args to append if no arguments are given
-always_args="-no-triple-gl-buffer" #always prepend these arguments
-mem="128" #client default is 32MB
-client_port="-1" #choose client port, take default with 0, or random ephemeral with -1
+quake_path="${quake_path:-$HOME/games/quake}"
+quake_exe="${quake_exe:-ezquake-linux-x86_64}"
+auto_args="${auto_args:-+connectbr nicotinelounge.com}" #args to append if no arguments are given
+always_args="${always_args:--no-triple-gl-buffer}" #always prepend these arguments
+mem="${mem:-128}" #client default is 32MB
+client_port="${client_port:--1}" #choose client port, take default with 0, or random ephemeral with -1
 
 #enable desktop notifications (when users join/ready by default) through libnotify/notify-send?
-enable_notifications="1"
+enable_notifications="${enable_notifications:-1}"
 
 #ask user to authenticate if needed?
-sudo_ask="1"
+sudo_ask="${sudo_ask:-1}"
 
 #optimization parameters
-opengl_multithreading="0" #nvidia/mesa threaded optimizations?
-nvidia_prerendered_frames="0" #as of the 4xx driver series, 0 is application controlled (2).  1 is the lowest latency setting, but will cause a significant fps drop
-nvidia_allow_page_flipping="0"
-nvidia_settings_optimizations="1" #attempt to use nvidia-settings for various optimized settings?
-nice_level="-5" #(sudo)
-disable_turbo="0" #disable turbo on intel processors (sudo)
-set_affinity="0" #set process affinity
-affinity_cores="2,3" #cores to use for process and underlying threads, comma separated list (no spaces)
+opengl_multithreading="${opengl_multithreading:-0}" #nvidia/mesa threaded optimizations?
+nvidia_prerendered_frames="${nvidia_prerendered_frames:-0}" #as of the 4xx driver series, 0 is application controlled (2).  1 is the lowest latency setting, but will cause a significant fps drop
+nvidia_allow_page_flipping="${nvidia_allow_page_flipping:-0}"
+nvidia_settings_optimizations="${nvidia_settings_optimizations:-1}" #attempt to use nvidia-settings for various optimized settings?
+nice_level="${nice_level:--5}" #(sudo)
+disable_turbo="${disable_turbo:-0}" #disable turbo on intel processors (sudo)
+set_affinity="${set_affinity:-0}" #set process affinity
+affinity_cores="${affinity_cores:-2,3}" #cores to use for process and underlying threads, comma separated list (no spaces)
 
 #deprecated
 #bind_threads="0" #bind threads to cores?
