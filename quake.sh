@@ -222,7 +222,7 @@ IFS=$OLDIFS
 
 
 #spawn quake process and parse stdout for notifications
-quake_command="$quake_path/$quake_exe $always_args $args -mem $mem"
+quake_command="$quake_path/$quake_exe $args -mem $mem $always_args"
 
 if [ $client_port -lt 0 ];then
 	quake_command+=" -clientport 0 "
