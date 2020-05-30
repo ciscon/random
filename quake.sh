@@ -16,6 +16,11 @@
 #   sudo: /usr/bin/sudo
 #   util-linux: /usr/bin/taskset
 
+
+#create this file and put any of the following variables in them to override defaults
+. ${HOME}/.quake_script_prefs.sh >/dev/null 2>&1
+
+
 #game vars - these most likely need to be customized
 quake_path="${quake_path:-$HOME/games/quake}"
 quake_exe="${quake_exe:-ezquake-linux-x86_64}"
@@ -159,6 +164,10 @@ if [ $opengl_multithreading -eq 1 ];then
 
 	export __GL_THREADED_OPTIMIZATIONS=1
 	export mesa_glthread=true
+else
+	#explicitly disable threading
+	export __GL_THREADED_OPTIMIZATIONS=0
+	export mesa_glthread=false
 fi
 
 if [ ! -z "$LD_PRELOAD" ];then
