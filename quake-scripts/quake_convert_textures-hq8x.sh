@@ -27,6 +27,7 @@ mkdir textures
 mv *.png textures 
 cd textures
 rename 's/plus_/+/' *.png
+rename 's/star_/#/' *.png
 rename 's/_fbr//' *.png
 cd ..
 
