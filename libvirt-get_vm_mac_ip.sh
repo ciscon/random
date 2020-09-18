@@ -25,7 +25,7 @@ for i in $hosts;do
         ssh "$host" "for ip in ${network_prefix}.{1..254}; do ping -W1 -c1 \${ip} >/dev/null 2>&1 & done;wait"
         for vm in $vms;do
             if [ ! -z "$vm" ];then
-                (
+                #(
                     mac=$(ssh "$i" "virsh domiflist \"$vm\"|grep --color=never vnet|awk '{print \$5}'" 2>/dev/null)
                     if [ -z "$mac" ];then
                         errors+="no mac found for $vm\n"
@@ -36,7 +36,7 @@ for i in $hosts;do
                     else
                         echo -e "$i\t$vm\t$ip\t$mac"
                     fi
-                )&
+                #)&
             fi
         done
     fi
