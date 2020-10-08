@@ -1,72 +1,102 @@
 #!/bin/bash
 #live backup of lvm backed vms using borg
 #
-##restoration command
-#borg extract --stdout ${backup_mountpoint}/${backupdir}::LVM-DATE LVM > ${lvpath}/LVM
+##list archives
+#borg list ${backup_mountpoint}/${backupdir}
+#
+##restore vm
+#nice ionice -c3 borg extract --stdout ${backup_mountpoint}/${backupdir}::LVM-DATE |nice ionice -c3 dd bs=64M of=${lvpath}/LVM iflag=fullblock oflag=direct status=progress
+#
+#ssh:
+#sync;nice ionice -c3 dd iflag=fullblock if=/dev/vmvg2/fromimage bs=64M |nice pigz -1 -c - |ssh -o compression=no 10.10.100.5 "nice pigz -d | nice ionice -c3 dd iflag=fullblock oflag=direct bs=64M of=/dev/vmvg1/toimage status=progress;sync"
+#
+#borg extract --stdout ${backup_mountpoint}/${backupdir}::LVM-DATE |dd bs=64M of=${lvpath}/LVM oflag=direct iflag=fullblock
 
+date
+
+export BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK=yes
+export BORG_RELOCATED_REPO_ACCESS_IS_OK=yes
 
 backup_mountpoint="/mnt/ssnas1"
-lvpath="/dev/vmvg1"
-backupdir="vm_backup"
+lvpath="/dev/vmvg2"
+backupdir="vms_$(hostname)"
+
+blacklist="clean_install
+testing"
 
 #make sure ls isn't polluted
 unalias ls >/dev/null 2>&1
 
 #lvs of vms to backup
-lvs=$(ls ${lvpath})
+lvs=$(ls ${lvpath}|grep -v swap)
 
 #check that backup mountpoint is mounted
 mountpoint -q ${backup_mountpoint}||mount ${backup_mountpoint} >/dev/null 2>&1
 mountpoint -q ${backup_mountpoint} >/dev/null 2>&1
 
 if [ $? -ne 0 ];then
-  echo "ssnas1 not mounted, exiting."
-  exit 1
+	echo "ssnas1 not mounted, exiting."
+	exit 1
 fi
 
 #create backup directory if it does not exist
 if [ ! -d ${backup_mountpoint}/${backupdir} ];then
-  borg init -e none ${backup_mountpoint}/${backupdir} >/dev/null 2>&1
+	borg init -e none ${backup_mountpoint}/${backupdir} >/dev/null 2>&1
 fi
 
 #backup lvm configuration
 echo "backing up lv information"
 lvdisplay > /tmp/lvdisplay.txt
-borg create ${backup_mountpoint}/${backupdir}::lvdisplay-`date +%Y-%m-%d` /tmp/lvdisplay.txt
+result=$(borg create ${backup_mountpoint}/${backupdir}::lvdisplay-`hostname`-`date +%Y-%m-%d-%H` /tmp/lvdisplay.txt 2>&1)
 
 #do actual backups
 for lv in $lvs;do
 
-  echo "backing up $lv at `date`"
-  lvcreate -L20G -s -n backup$lv $lvpath/$lv >/dev/null 2>&1
-  if [ $? -ne 0 ];then
-    echo "creation of snapshot failed, exiting."
-    lvremove $lvpath/backup$lv -f >/dev/null 2>&1
-    exit 2
-  fi
+	skip=0
+	#skip blacklisted vms
+	if [ ! -z "$blacklist" ];then
+		for blacklisted in $blacklist;do
+			if [[ $lv == *$blacklisted* ]]; then
+				echo -e "blacklisted: $lv - skipping\n"
+				skip=1
+			fi
+		done
+	fi
 
-  sync
+	if [ $skip -ne 1 ];then
+		echo "backing up $lv at `date`"
+		lvcreate -L10G -s -n backup$lv $lvpath/$lv >/dev/null 2>&1
+		if [ $? -ne 0 ];then
+			echo "ERROR: creation of snapshot failed, skipping vm."
+			lvremove $lvpath/backup$lv -f >/dev/null 2>&1
+			continue
+			#exit 2
+		fi
 
-#fast compression, large chunks
-nice ionice -n 2 borg create --compression lz4 --chunker-params 19,23,21,4095 --read-special -v --stats ${backup_mountpoint}/${backupdir}::${lv}-`date +%Y-%m-%d` $lvpath/backup$lv
+		sync
+
+		result=$(nice ionice -n 2 borg create --compression zstd,3 --chunker-params 19,23,21,4095 --read-special -v --stats ${backup_mountpoint}/${backupdir}::${lv}-`date +%Y-%m-%d-%H` $lvpath/backup$lv 2>&1)
 
 
-  if [ $? -ne 0 ];then
-    echo "backup of $lv failed, exiting."
-    lvremove $lvpath/backup$lv -f >/dev/null 2>&1
-    exit 3 
-  fi
+		if [ $? -ne 0 ];then
+			echo "ERROR: backup of $lv failed, continuing."
+			echo "$result"
+			lvremove $lvpath/backup$lv -f >/dev/null 2>&1
+			#exit 3
+		fi
 
-  lvremove $lvpath/backup$lv -f >/dev/null 2>&1
-  if [ $? -ne 0 ];then
-    echo "removal of snaphot failed, exiting."
-    exit 4
-  fi
+		lvremove $lvpath/backup$lv -f >/dev/null 2>&1
+		if [ $? -ne 0 ];then
+			echo "ERROR: removal of snaphot failed, continuing."
+			#exit 4
+		fi
 
-  echo -e "backup of $lv complete\n"
+		echo -e "backup of $lv complete\n"
+	fi
 
 done
 
 echo "removing old archives..."
-echo "just running with --dry-run, remove this when we actually want to remove old backups"
-borg prune --dry-run --stats -v --keep-daily=7 --keep-weekly=8 ${backup_mountpoint}/${backupdir}
+#echo "just running with --dry-run, remove this when we actually want to remove old backups"
+borg prune --dry-run --stats -v --keep-weekly=4 ${backup_mountpoint}/${backupdir}
+#nice ionice -n2 borg prune --save-space --stats -v --keep-within 4w ${backup_mountpoint}/${backupdir}
