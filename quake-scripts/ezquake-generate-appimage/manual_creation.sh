@@ -11,6 +11,10 @@ Icon=quake
 Type=Application
 Categories=Game;"
 
+unset CC
+export CFLAGS="-march=nehalem -pipe -flto=$(nproc)"
+export LDFLAGS="$CFLAGS"
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 mkdir -p build && \
@@ -30,7 +34,7 @@ if [ $? -ne 0 ];then
 fi
 REVISION=$(git log -n 1|head -1|awk '{print $2}'|cut -c1-6)
 make clean && \
-make -j5 && \
+nice make -j$(nproc) && \
 cp -f ezquake-linux-x86_64 "$DIR/AppDir/usr/bin/." && \
 ln -sf usr/bin/ezquake-linux-x86_64 "$DIR/AppDir/AppRun" && \
 echo "$DESKTOP_ENTRY" > "$DIR/AppDir/ezquake.desktop" && \
