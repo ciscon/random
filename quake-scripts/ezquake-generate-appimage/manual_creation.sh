@@ -12,7 +12,7 @@ Type=Application
 Categories=Game;"
 
 unset CC
-export CFLAGS="-march=nehalem -pipe -flto=$(nproc)"
+export CFLAGS="-march=nehalem -O3 -pipe -flto=$(nproc) -fwhole-program"
 export LDFLAGS="$CFLAGS"
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
