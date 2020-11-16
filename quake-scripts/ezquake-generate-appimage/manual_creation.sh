@@ -1,5 +1,7 @@
 #!/bin/bash
 
+GIT_COMMIT=""
+
 SKIP_BUILD=0
 
 if ! hash appimagetool;then
@@ -41,10 +43,14 @@ if [ "$SKIP_BUILD" != "1" ];then
 	git clean -qfdx
 fi
 git reset --hard
+git checkout master
 git pull
 if [ $? -ne 0 ];then
 	echo "error updating from git"
 	exit 1
+fi
+if [ ! -z $GIT_COMMIT ];then
+	git checkout $GIT_COMMIT
 fi
 REVISION=$(git log -n 1|head -1|awk '{print $2}'|cut -c1-6)
 chmod +x ./build-linux.sh && \
