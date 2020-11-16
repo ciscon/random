@@ -2,11 +2,6 @@
 
 GIT_COMMIT=""
 
-if ! hash appimagetool;then
-	echo "appimagetool not installed."
-	exit 1
-fi
-
 #unused but must exist
 DESKTOP_ENTRY='[Desktop Entry]
 Name=ezquake
@@ -66,4 +61,4 @@ strip -s "$DIR/AppDir/usr/lib/"* || exit 5
 strip -s "$DIR/AppDir/usr/bin/"* || exit 5
 
 cd "$DIR" || exit 5
-appimagetool AppDir ezquake-$REVISION.AppImage
+./appimagetool AppDir ezquake-$REVISION.AppImage
