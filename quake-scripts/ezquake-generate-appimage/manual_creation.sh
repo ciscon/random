@@ -12,7 +12,7 @@ if ! hash patchelf;then
 fi
 
 QUAKE_SCRIPT='
-ezquake-linux-x86_64 -basedir "$OWD"
+ezquake-linux-x86_64 -basedir "$OWD" "$*"
 '
 
 DESKTOP_ENTRY='[Desktop Entry]
