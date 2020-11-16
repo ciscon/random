@@ -1,18 +1,15 @@
 #!/bin/bash
 
-SKIP_BUILD=1
+SKIP_BUILD=0
 
 if ! hash appimagetool;then
 	echo "appimagetool not installed."
 	exit 1
 fi
-if ! hash patchelf;then
-	echo "patchelf not installed."
-	exit 1
-fi
 
 QUAKE_SCRIPT='
-ezquake-linux-x86_64 -basedir "$OWD" "$*"
+cd "$OWD"
+ezquake-linux-x86_64 $*
 '
 
 DESKTOP_ENTRY='[Desktop Entry]
@@ -31,9 +28,9 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 if [ -d AppDir ];then
 	rm -rf AppDir
 fi
-mkdir -p build && \
-mkdir -p AppDir/usr/bin && \
-mkdir -p AppDir/usr/lib && \
+mkdir -p "$DIR/build" || exit 1
+mkdir -p "$DIR/AppDir/usr/bin" || exit 1
+mkdir -p "$DIR/AppDir/usr/lib" || exit 1
 cd build && \
 if [ ! -d ezquake-source ];then
 	git clone https://github.com/ezQuake/ezquake-source.git
@@ -50,16 +47,18 @@ if [ $? -ne 0 ];then
 	exit 1
 fi
 REVISION=$(git log -n 1|head -1|awk '{print $2}'|cut -c1-6)
-nice make -j$(nproc) && \
-cp -f ezquake-linux-x86_64 "$DIR/AppDir/usr/bin/." || exit 2
+chmod +x ./build-linux.sh && \
+nice ./build-linux.sh || exit 3
+cp -f ezquake-linux-x86_64 "$DIR/AppDir/usr/bin/." || exit 4
 rm -f "$DIR/AppDir/AppRun"
-cp -f "$DIR/AppRun-x86_64" "$DIR/AppDir/AppRun" || exit 2
-chmod +x "$DIR/AppDir/AppRun" || exit 2
-echo "$DESKTOP_ENTRY" > "$DIR/AppDir/ezquake.desktop" || exit 2
-echo "$QUAKE_SCRIPT" > "$DIR/AppDir/usr/bin/quake.sh" || exit 2
-chmod +x "$DIR/AppDir/usr/bin/quake.sh" || exit 2
+cp -f "$DIR/AppRun-x86_64" "$DIR/AppDir/AppRun" || exit 4
+chmod +x "$DIR/AppDir/AppRun" || exit 4
+echo "$DESKTOP_ENTRY" > "$DIR/AppDir/ezquake.desktop" || exit 4
+echo "$QUAKE_SCRIPT" > "$DIR/AppDir/usr/bin/quake.sh" || exit 4
+chmod +x "$DIR/AppDir/usr/bin/quake.sh" || exit 4
 cp "$DIR/quake.png" "$DIR/AppDir/."||true #copy over quake png if it exists
-cd "$DIR" && \
-ldd AppDir/usr/bin/ezquake-linux-x86_64 |grep --color=never -v libz|grep --color=never -v libGL|grep --color=never -v libc.so|awk '{print $3}'|xargs -I% cp "%" AppDir/usr/lib/. && \
-
+ldd "$DIR/AppDir/usr/bin/ezquake-linux-x86_64" |grep --color=never -v libz|grep --color=never -v libGL|grep --color=never -v libc.so|awk '{print $3}'|xargs -I% cp "%" "$DIR/AppDir/usr/lib/." || exit 5
+strip -s "$DIR/AppDir/usr/lib/"* || exit 5
+strip -s "$DIR/AppDir/usr/bin/ezquake"* || exit 5
+cd "$DIR" || exit 5
 appimagetool AppDir ezquake-$REVISION.AppImage
