@@ -56,7 +56,7 @@ echo "$QUAKE_SCRIPT" > "$DIR/AppDir/AppRun" || exit 4
 chmod +x "$DIR/AppDir/AppRun" || exit 4
 echo "$DESKTOP_ENTRY" > "$DIR/AppDir/ezquake.desktop" || exit 4
 cp "$DIR/quake.png" "$DIR/AppDir/."||true #copy over quake png if it exists
-ldd "$DIR/AppDir/usr/bin/ezquake-linux-x86_64" |grep --color=never -v libz|grep --color=never -v libGL|grep --color=never -v libc.so|awk '{print $3}'|xargs -I% cp "%" "$DIR/AppDir/usr/lib/." || exit 5
+ldd "$DIR/AppDir/usr/bin/ezquake-linux-x86_64" |grep --color=never -v libpthread|grep --color=never -v libz|grep --color=never -v libGL|grep --color=never -v libc.so|awk '{print $3}'|xargs -I% cp "%" "$DIR/AppDir/usr/lib/." || exit 5
 strip -s "$DIR/AppDir/usr/lib/"* || exit 5
 strip -s "$DIR/AppDir/usr/bin/"* || exit 5
 
