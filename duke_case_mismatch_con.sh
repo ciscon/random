@@ -6,14 +6,15 @@ if ! hash nproc || ! hash grep || ! hash find || ! hash rename || ! hash sed || 
   exit 1
 fi
 
-#first fix all art files
-find . -type f -iname '*.art' -print0|xargs -0 rename 's/(.*)\/([^\/]*)/$1\/\L$2/'
-
 con_files="$(find . -type f -iname '*.con' -printf '%P\t')"
 if [ -z "$con_files" ];then
   echo "no con files found, are we inside the proper directory?  bailing out."
   exit 2
 fi
+
+#first fix all art files
+find . -type f -iname '*.art' -print0|xargs -0 rename 's/(.*)\/([^\/]*)/$1\/\L$2/'
+
 files="$(find . -type f -printf '%P\t')"
 basename_files="$(find . -type f -printf '%f\t')"
 OLD_IFS=$IFS
