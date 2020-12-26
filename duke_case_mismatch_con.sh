@@ -15,6 +15,7 @@ for file in $files;do
         if [ $? -ne 0 ];then
           echo "case mismatch file/path on $file in $con"
           #optionally add rename or sed logic here
+          #sed -i "s|$foundfile|$file|g" "$con"
         fi
       done
     fi
