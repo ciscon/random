@@ -1,6 +1,9 @@
 #!/bin/bash
 #find case mismatches between con file references and files
 
+#first fix all art files
+find .|grep \.art$ -i --color=never|xargs rename 's/(.*)\/([^\/]*)/$1\/\L$2/'
+
 con_files="$(find . -type f -iname *.con -printf '%P\t')"
 files="$(find . -type f -printf '%P\t')"
 basename_files="$(find . -type f -printf '%f\t')"
