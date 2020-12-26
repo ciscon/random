@@ -11,7 +11,7 @@ for file in $files;do
     found=$(grep --color=never -i "$file" "$con")
     if [ ! -z "$found" ];then
       for foundfile in $found;do
-        find . | grep --color=never "$foundfile" -c >/dev/null 2>&1
+        grep --color=never "$file" "$con" >/dev/null 2>&1
         if [ $? -ne 0 ];then
           echo "case mismatch file/path on $file in $con"
           #optionally add rename or sed logic here
