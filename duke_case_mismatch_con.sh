@@ -1,10 +1,19 @@
 #!/bin/bash
 #find case mismatches between con file references and files
 
+if ! hash nproc || ! hash grep || ! hash find || ! hash rename || ! hash sed || ! hash xargs ;then
+  echo "missing required binary, bailing out."
+  exit 1
+fi
+
 #first fix all art files
 find .|grep \.art$ -i --color=never|xargs rename 's/(.*)\/([^\/]*)/$1\/\L$2/'
 
 con_files="$(find . -type f -iname *.con -printf '%P\t')"
+if [ -z "$con_files" ];then
+  echo "no con files found, are we inside the proper directory?  bailing out."
+  exit 2
+fi
 files="$(find . -type f -printf '%P\t')"
 basename_files="$(find . -type f -printf '%f\t')"
 OLD_IFS=$IFS
