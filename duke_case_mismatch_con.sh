@@ -1,13 +1,14 @@
 #!/bin/bash
 #find case mismatches between con file references and files
 
-con_files="$(find . -type f -iname *.con -print0|tr '\0' '\t')"
-files="$(find . -type f -printf '%P\t'|tr '\0' '\t')"
+con_files="$(find . -type f -iname *.con -printf '%P\t')"
+files="$(find . -type f -printf '%P\t')"
 OLD_IFS=$IFS
 IFS=$'\t'
 
-for file in $files;do
-  for con in $con_files;do
+for con in $con_files;do
+  (
+  for file in $files;do
     found=$(grep --color=never -i "$file" "$con")
     if [ ! -z "$found" ];then
       for foundfile in $found;do
@@ -20,8 +21,10 @@ for file in $files;do
       done
     fi
   done
-
-
+  )&
+  if (( $(wc -w <<<$(jobs -p)) % $(nproc) == 0 )); then wait; fi
 done
+
+wait
 
 IFS=$OLD_IFS
