@@ -3,14 +3,23 @@
 
 #set this to 1 in order to start without any proxies, useful to troubleshoot issues
 drystart=0
-
+#firefox or chromium/chrome
+browser="chromium"
+#which country to pull proxies for
 country="uk"
+#test request timeout
 timeout=1
+#use a (working) proxy at random as opposed to lowest latency first
 random=0
 #we expect to get a 200 response
 testdata="GET https://www.channel4.com"
-#how many proxies to put into list
+#how many proxies to put into list, only for chromium/chrome
 limit=10
+
+#firefox uses http_proxy environment variable and only supports 1
+if [ "$browser" = "firefox" ];then
+  limit=1
+fi
 
 if [ "$drystart" = 0 ];then
 
@@ -36,9 +45,13 @@ if [ "$drystart" = 0 ];then
   if [ "$random" = "1" ];then
     randcmd="shuff"
   fi
-  
-  for i in $(seq 0 $limit);do
-    http_proxy+=$(echo "$output"|$randcmd -n1|awk '{print "http://"$2":"$3}')";"
+
+  join=";"
+  if [ "$limit" -eq 1 ];then
+    join=""
+  fi
+  for i in $(seq 1 $limit);do
+    http_proxy+=$(echo "$output"|$randcmd -n1|awk '{print "http://"$2":"$3}')"$join"
     output=$(echo "$output"|tail -n +2)
   done
 
@@ -46,4 +59,11 @@ fi
 
 echo "using http proxy $http_proxy"
 
-/usr/bin/chromium --user-data-dir=${HOME}/.chromium-${country} --proxy-server="$http_proxy" $*
+if [ "$browser" = "firefox" ];then
+  export http_proxy
+  export https_proxy=$http_proxy
+  $browser -CreateProfile "firefox-${country}"
+  $browser -P "firefox-${country}"
+else
+  $browser --user-data-dir=${HOME}/.chromium-${country} --proxy-server="$http_proxy" $*
+fi
