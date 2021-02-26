@@ -8,11 +8,11 @@ browser="chromium"
 #which country to pull proxies for
 country="uk"
 #test request timeout
-timeout=2
+timeout=5
 #use a (working) proxy at random as opposed to lowest latency first
 random=0
 #we expect to get a 200 response
-testdata="GET https://www.channel4.com"
+testurl="https://www.google.com"
 #how many proxies to put into list, only for chromium/chrome
 limit=10
 
@@ -23,6 +23,7 @@ fi
 
 if [ "$drystart" = 0 ];then
 
+  echo "getting list"
   rawlist=$(wget -q -O - "https://free-proxy-list.net/${country}-proxy.html")
   if [ $? -ne 0 ];then
     echo "failed to retrieve list"
@@ -33,14 +34,15 @@ if [ "$drystart" = 0 ];then
     echo "failed to parse list"
     exit 1
   fi
-  
+ 
+  echo "testing proxies" 
   output=$(
     for host in $list;do
       (
         (
           ip=$(echo "$host" | cut -f1 -d:)
           port=$(echo "$host" | cut -f2 -d:)
-          temptime=$(time (echo "$testdata"|nc -w $timeout $ip $port 2>/dev/null|grep -q '200 OK'||echo "FAIL") 2>&1)
+          temptime=$(time (echo -e "GET ${testurl}\n\n\n"|nc -w $timeout $ip $port 2>/dev/null|grep -q '200 OK'||echo "FAIL") 2>&1)
           if [ $(grep -c 'FAIL' <<< $temptime) -eq 0 ];then
             time=$(echo "$temptime"|grep --color=never real|awk '{print $2}')
             echo "$time $ip $port"
