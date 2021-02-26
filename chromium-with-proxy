@@ -1,0 +1,36 @@
+#!/bin/bash
+# pull down list of proxies, test, and choose one at random or fastest by response time.
+
+country="uk"
+timeout=1
+random=0
+#we expect to get a 200 response
+testdata="GET https://www.channel4.com"
+
+list=$(wget -q -O - "https://free-proxy-list.net/${country}-proxy.html"|sed 's/<tr>/\n/g'|grep --color=never '<td>'|awk -F'[<>]' '{print $3":"$7}')
+
+output=$(
+  for host in $list;do
+    (
+      (
+        ip=$(echo "$host" | cut -f1 -d:)
+        port=$(echo "$host" | cut -f2 -d:)
+        temptime=$(time (echo "$testdata"|nc -w $timeout $ip $port 2>/dev/null|grep -q '200 OK'||echo "FAIL") 2>&1)
+        if [ $(grep -c 'FAIL' <<< $temptime) -eq 0 ];then
+          time=$(echo "$temptime"|grep --color=never real|awk '{print $2}')
+          echo "$time $ip $port"
+        fi
+      )& 2>/dev/null
+    ) 
+  done | sort -n
+)
+
+randcmd="head"
+if [ "$random" = "1" ];then
+  randcmd="shuff"
+fi
+http_proxy=$(echo "$output"|$randcmd -n1|awk '{print "http://"$2":"$3}')
+
+echo "using http proxy $http_proxy"
+
+/usr/bin/chromium --user-data-dir=${HOME}/.chromium-${country} --proxy-server="$http_proxy" $*
