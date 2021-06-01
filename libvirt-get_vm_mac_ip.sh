@@ -17,7 +17,7 @@ proxy_host="dalek"
 for i in $hosts;do
     if [ ! -z "$i" ];then
 
-        vms=$(ssh "$i" "virsh list --name") 2>/dev/null
+        vms=$(ssh "$i" "virsh --connect qemu:///system list --name") 2>/dev/null
         if [ -z "$vms" ];then
             errors+="failed to retrieve vm list from $i."
         fi
@@ -26,11 +26,11 @@ for i in $hosts;do
         for vm in $vms;do
             if [ ! -z "$vm" ];then
                 #(
-                    mac=$(ssh "$i" "virsh domiflist \"$vm\"|grep --color=never vnet|awk '{print \$5}'" 2>/dev/null)
+                    mac=$(ssh "$i" "virsh --connect qemu:///system domiflist \"$vm\"|grep --color=never vnet|awk '{print \$5}'" 2>/dev/null)
                     if [ -z "$mac" ];then
                         errors+="no mac found for $vm\n"
                     fi
-                    ip=$(ssh "$host" "arp -n|grep --color=never -i \"$mac\" 2>/dev/null|tail -n1|awk '{print \$1}' 2>/dev/null")
+                    ip=$(ssh "$host" "PATH=$PATH:/usr/sbin:/sbin arp -n|grep --color=never -i \"$mac\" 2>/dev/null|tail -n1|awk '{print \$1}' 2>/dev/null")
                     if [ -z "$ip" ];then
                         errors+="no ip found for $vm\n"
                     else
