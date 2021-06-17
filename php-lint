@@ -1,0 +1,5 @@
+#!/bin/bash
+
+LINT="php -d display_errors=1 -d log_errors=0 -d error_reporting=5 -l "
+
+find . -type f \( -name '*.php' -o -name '*.html' \) -print0|xargs -0 -P$(nproc) -I% sh -c "$LINT \"%\" 2>&1 |grep -v 'No syntax errors detected'"
