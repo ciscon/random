@@ -1,0 +1,43 @@
+#!/bin/bash -e
+
+export releasever=35
+export basearch=x86_64
+chroot_path=/var/tmp/chroot/fedora
+
+
+if [ $(id -u) -ne 0 ];then
+  SUDO=sudo
+else
+  SUDO=
+fi
+
+$SUDO mkdir -p "$chroot_path"
+
+if [ -e /tmp/yum ];then
+  $SUDO rm -rf /tmp/yum
+fi
+$SUDO mkdir /tmp/yum
+
+$SUDO cat <<EOF | sudo tee /tmp/yum/base.conf >/dev/null
+[fedora]
+name=Fedora $releasever - $basearch
+metalink=https://mirrors.fedoraproject.org/metalink?repo=fedora-$releasever&arch=$basearch
+EOF
+
+$SUDO mkdir -p /tmp/yum/vars
+$SUDO bash -c "echo $releasever > /tmp/yum/vars/releasever"
+$SUDO bash -c "echo $basearch > /tmp/yum/vars/basearch"
+
+$SUDO dnf install --nogpgcheck -y -c /tmp/yum/base.conf --setopt=varsdir=/tmp/yum/vars --installroot="$chroot_path" filesystem
+
+$SUDO mkdir -p "$chroot_path"/etc/yum/vars
+$SUDO cp -f /tmp/yum/vars/* "$chroot_path"/etc/yum/vars/.
+
+$SUDO cat <<EOF | sudo tee "$chroot_path"/.bashrc >/dev/null
+set -o vi
+export EDITOR=vi
+EOF
+
+$SUDO dnf install --nogpgcheck -y --installroot="$chroot_path" @core git xcb-util mesa-dri-drivers.x86_64
+
+$SUDO cp -f /etc/resolv.conf "$chroot_path"/etc/resolv.conf
