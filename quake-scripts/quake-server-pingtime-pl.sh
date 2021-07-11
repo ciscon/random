@@ -12,7 +12,7 @@ while [ 1 ];do
 
     current=$(date +%s%N|cut -b1-13)
     rtt=$(
-      echo -e "\xff\xff\xff\xffstatus 23"|nc -w 1 -u $host $port|stdbuf -i0 -o0 -e0 strings| \
+      echo -e "\xff\xff\xff\xffstatus 23"|nc -w $rtt_threshold -u $host $port|stdbuf -i0 -o0 -e0 strings| \
         while read -t 3 -r line;do
 
         rtt=$(echo "scale=100;$(date +%s%N|cut -b1-13)-${current}"|bc)
@@ -32,4 +32,5 @@ while [ 1 ];do
     sleep $sleeptime
 
   done
+
 done
