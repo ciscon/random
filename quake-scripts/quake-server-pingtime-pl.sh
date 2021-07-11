@@ -4,7 +4,7 @@
 host=quakecon.miami.ultrav.us
 ports="28501 28502"
 rtt_threshold=10
-sleeptime=1
+wait_threshold=2
 
 while [ 1 ];do
 
@@ -12,14 +12,11 @@ while [ 1 ];do
 
     current=$(date +%s%N|cut -b1-13)
     rtt=$(
-      echo -e "\xff\xff\xff\xffstatus 23"|nc -w $rtt_threshold -u $host $port|stdbuf -i0 -o0 -e0 strings| \
-        while read -t 3 -r line;do
-
-        rtt=$(echo "scale=100;$(date +%s%N|cut -b1-13)-${current}"|bc)
-        echo "$rtt"
-        break
-
-      done
+      echo -e "\xff\xff\xff\xffstatus 23"|nc -w $wait_threshold -u $host $port|stdbuf -i0 -o0 -e0 strings| \
+        while read -t $wait_threshold -r line;do
+          echo "scale=100;$(date +%s%N|cut -b1-13)-${current}"|bc
+          break
+        done
     )
 
     #no response?
@@ -28,8 +25,6 @@ while [ 1 ];do
     if [ $rtt -gt $rtt_threshold ];then
       echo "$(date) : $host $port rtt=$rtt"
     fi
-
-    sleep $sleeptime
 
   done
 
