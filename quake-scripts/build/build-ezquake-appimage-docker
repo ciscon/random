@@ -1,0 +1,53 @@
+#!/bin/bash
+# force=1 to skip revision check
+
+set -e
+
+bindir="/mnt/nas-quake/binaries/linux/appimage"
+buildroot="/tmp/build/ezquake-appimage"
+gitrepo="https://github.com/ciscon/ezquake-generate-appimage.git"
+
+#using purely to check revision
+ezquakegitrepo="https://github.com/ezQuake/ezquake-source.git"
+remotehead=$(git ls-remote "$ezquakegitrepo" HEAD|head -1|awk '{print $1}'|cut -c1-6)
+
+if [ -z "$remotehead" ];then
+  echo "couldn't retrieve remote head"
+  exit 1
+fi
+
+if [ -d "$buildroot" ];then
+  rm -rf "$buildroot"
+fi
+mkdir -p "$buildroot"
+
+if [ "$force" != "1" ];then
+  #check whether or not we need to proceed
+  for bin in "${bindir}/"ezquake-*-??????.AppImage;do
+    temprev=$(echo "$bin"|awk -F'[.-]' '{print $(NF-1)}')
+    if [ "$temprev" = "$remotehead" ];then
+      echo "revision already built, exiting."
+      exit 0
+    fi
+  done
+fi
+
+docker pull debian:unstable
+docker run  --net=host --rm --device /dev/fuse --cap-add SYS_ADMIN -v "$buildroot":/build debian:unstable nice -n 20 bash -c 'export DEBIAN_FRONTEND=noninteractive;mkdir -p /etc/apt/apt.conf.d;echo "APT::Install-Recommends "0"; APT::AutoRemove::RecommendsImportant "false";" >> /etc/apt/apt.conf.d/01lean && apt-get -qqy update && apt-get -qqy install file libfuse2 git make sudo ca-certificates && git clone "'$gitrepo'" /build/ && cd /build && ./manual_creation.sh;chown -Rf '$(id -u ${USER})':'$(id -g ${USER})' /build -R'
+
+
+if [ $? -eq 0 ];then
+  if [ -d  "$bindir" ];then
+    cd "$buildroot"
+    ln -sf *.AppImage ezquake-latest.AppImage && cp -Pf --remove-destination *.AppImage "$bindir/".
+  else
+    echo "$bindir not found, bailing out."
+    exit 1
+  fi
+else
+  echo "something failed, bailing out."
+  exit 1
+fi
+
+echo "appimage created successfully and copied to $bindir"
+exit 0
