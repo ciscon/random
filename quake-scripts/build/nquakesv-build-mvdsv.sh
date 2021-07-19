@@ -24,6 +24,7 @@ export LDFLAGS+=" -fcommon "
 
 if [ ! -d $nquakesv_home/build/mvdsv ];then
 	git clone https://github.com/Iceman12k/mvdsv $nquakesv_home/build/mvdsv
+    force=1
 fi
 cd $nquakesv_home/build/mvdsv
 

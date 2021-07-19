@@ -22,6 +22,7 @@ export LDFLAGS+=" -fcommon "
 
 if [ ! -d $nquakesv_home/build/ktx ];then
         git clone https://github.com/Iceman12k/ktx $nquakesv_home/build/ktx
+        force=1
 fi
 cd $nquakesv_home/build/ktx
 
