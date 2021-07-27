@@ -3,36 +3,6 @@
 
 set -e
 
-ezquake_config='
-CFLAGS=-m32 -O2 -msse2 -mfpmath=sse -g0 -D_DEBUG -D_WIN32_WINNT=0x0501 -D__USE_MINGW_ANSI_STDIO -DWITH_WINAMP -Imingw32-libs/include -Wall -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast -Wno-strict-aliasing -Werror=strict-prototypes -Werror=old-style-definition -MMD
-GCCVERSION=$(shell gcc -dumpversion)
-LDFLAGS=-Lmingw32-libs/lib -L/usr/lib/gcc/i686-w64-mingw32/$(GCCVERSION)-posix -static
-ZLIB_LIBS=-lz
-SDL2_CFLAGS=-Imingw32-libs/include/SDL2
-SDL2_LIBS=-lSDL2 -lole32 -limm32 -lcomctl32 -lversion -loleaut32
-PCRE_CFLAGS=-DPCRE_STATIC
-PCRE_LIBS=-lpcre
-CURL_CFLAGS=-DCURL_STATICLIB
-CURL_LIBS=-lcurl -lcrypt32
-SPEEX_LIBS=-lspeex -lspeexdsp
-EXPAT_CFLAGS=
-EXPAT_LIBS=-lexpat
-PNG_CFLAGS=-DWITH_PNG -DWITH_PNG_STATIC -Imingw32-libs/include/libpng16
-PNG_LIBS=-lpng16
-JPEG_CFLAGS=-DWITH_JPEG -DWITH_JPEG_STATIC
-JPEG_LIBS=-ljpeg
-JANSSON_CFLAGS=
-JANSSON_LIBS=-ljansson
-SNDFILE_CFLAGS=
-SNDFILE_LIBS=-lsndfile
-CONFIG_WINDOWS=y
-CC=clang -target i686-w64-mingw32
-WINDRES=i686-w64-mingw32-windres
-STRIP=i686-w64-mingw32-strip
-FREETYPE_CFLAGS=
-FREETYPE_LIBS=
-'
-
 unset CC
 export CFLAGS=" -pipe "
 export LDFLAGS="$CFLAGS"
@@ -62,7 +32,9 @@ if [ "$force" != "1" ];then
   done
 fi
 
-if [ ! -d "$gitdir" ];then
+if [ -d "$gitdir" ];then
+  rm -rf "$gitdir"
+  sync
   git clone "$gitrepo" "$gitdir" || exit 1
 fi
 
@@ -78,9 +50,6 @@ REVISION=$(git log -n 1|head -1|awk '{print $2}'|cut -c1-6)
 rm -f *.exe
 rm -f *.zip
 
-if [ ! -f .config_windows-clang ];then
-        echo "$ezquake_config" > .config_windows-clang
-fi
 sed -i 's/^CFLAGS=/CFLAGS+=/g' .config_windows-clang
 sed -i 's/^LDFLAGS=/LDFLAGS+=/g' .config_windows-clang
 
@@ -90,8 +59,14 @@ fi
 mkdir -p output
 make clean;MODERN_OPENGL_ONLY=1 EZ_CONFIG_FILE=.config_windows-clang nice make -j$(nproc)
 mv *.exe output/.
+
+#clean up files
+(git clean -qfdx -e output)
+
 make clean;CLASSIC_OPENGL_ONLY=1 EZ_CONFIG_FILE=.config_windows-clang nice make -j$(nproc)
 mv *.exe output/.
+
+strip output/*
 
 zip -9 -j -r "ezquake-clang-${VERSION}-${REVISION}.zip" output/*.exe
 
@@ -108,5 +83,5 @@ else
 fi
 
 echo "ezquake binary created successfully and copied to $bindir"
-make clean
+rm -rf "$gitdir"
 exit 0

@@ -50,4 +50,5 @@ else
 fi
 
 echo "appimage created successfully and copied to $bindir"
+rm -rf "$buildroot"
 exit 0
