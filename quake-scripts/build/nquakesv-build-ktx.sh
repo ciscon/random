@@ -17,8 +17,7 @@ fi
 
 #where our custom cflags/ldflags exists
 . /etc/profile
-export CFLAGS+=" -fcommon -march=native "
-export LDFLAGS+=" -fcommon "
+export CFLAGS+=" -march=native "
 
 if [ ! -d $nquakesv_home/build/ktx ];then
         git clone https://github.com/Iceman12k/ktx $nquakesv_home/build/ktx

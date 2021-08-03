@@ -4,8 +4,8 @@
 set -e
 
 unset CC
-export CFLAGS=" -fcommon "
-export LDFLAGS="$CFLAGS"
+#export CFLAGS=" "
+#export LDFLAGS="$CFLAGS"
 
 bindir="/mnt/nas-quake/binaries/win/ezquake"
 buildroot="/tmp/build"

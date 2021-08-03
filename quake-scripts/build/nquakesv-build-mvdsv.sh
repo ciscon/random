@@ -18,9 +18,7 @@ nquakesv_home="$HOME/nquakesv"
 
 #where our custom cflags/ldflags exists
 . /etc/profile
-export CFLAGS+=" -fcommon -march=native "
-export LDFLAGS+=" -fcommon "
-
+export CFLAGS+=" -march=native "
 
 if [ ! -d $nquakesv_home/build/mvdsv ];then
 	git clone https://github.com/Iceman12k/mvdsv $nquakesv_home/build/mvdsv
