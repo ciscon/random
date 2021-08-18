@@ -21,6 +21,7 @@ nquakesv_home="$HOME/nquakesv"
 export CFLAGS+=" -march=native "
 
 if [ ! -d $nquakesv_home/build/mvdsv ];then
+	mkdir -p $nquakesv_home/build
 	git clone https://github.com/Iceman12k/mvdsv $nquakesv_home/build/mvdsv
 	force=1
 fi

@@ -20,6 +20,7 @@ fi
 export CFLAGS+=" -march=native "
 
 if [ ! -d $nquakesv_home/build/ktx ];then
+	mkdir -p $nquakesv_home/build
 	git clone https://github.com/Iceman12k/ktx $nquakesv_home/build/ktx
 	force=1
 fi
