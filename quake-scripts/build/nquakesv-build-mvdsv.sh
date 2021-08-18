@@ -1,17 +1,31 @@
 #!/bin/bash 
 # force=1 to skip revision check
 
+
 #check for git
-if ! hash git;then
+if ! hash git 2>/dev/null;then
 	echo "can't find git.  exiting."
 	exit 1
 fi
 
 #check for quakestat
-if ! hash quakestat;then
-	echo "can't find quakestat.  exiting."
+if ! hash quakestat 2>/dev/null;then
+	echo "can't find quakestat (debian package qstat).  exiting."
 	exit 1
 fi
+
+#check for build tools
+if ! hash make 2>/dev/null || ! hash gcc 2>/dev/null;then
+	echo "can't find make/gcc (debian package build-essential).  exiting."
+	exit 1
+fi
+
+#check for pkg-config
+if ! hash pkg-config 2>/dev/null;then
+	echo "can't find pkg-config.  exiting."
+	exit 1
+fi
+
 
 nquakesv_home="$HOME/nquakesv"
 
