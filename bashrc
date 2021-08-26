@@ -1,18 +1,31 @@
-[[ $- != *i* ]] && return                                                                                                             
+#!/bin/bash -l
+
+[[ $- != *i* ]] && return
+
+export XDG_RUNTIME_DIR=/run/user/$(id -u)
 
 #set up term
-tput colors >/dev/null 2>&1 || export TERM=rxvt-256color
-tput colors >/dev/null 2>&1 || export TERM=xterm-256color
-tput colors >/dev/null 2>&1 || export TERM=xterm
+#tput colors >/dev/null 2>&1 || export TERM=rxvt-256color
+#tput colors >/dev/null 2>&1 || export TERM=xterm-256color
+#tput colors >/dev/null 2>&1 || export TERM=xterm
+export TERM=rxvt-256color
 
 
+#record path into history
+export PROMPT_COMMAND='hpwd=$(history 1); hpwd="${hpwd# *[0-9]*  }"; if [[ ${hpwd%% *} == "cd" ]]; then cwd=$OLDPWD; else cwd=$PWD; fi; hpwd="${hpwd% ### *} ### $cwd"; echo "$hpwd" >> ${HOME}/.historylong'
+alias historylong='cat -v ${HOME}/.historylong'
 
 if [ "$TERM" != "linux" ]; then
+    #export TRUELINE_USER_SHOW_IP_SSH=true
     if [ -f /home/git/pureline/pureline ] && [ -f ~/.pureline.conf ];then
         source /home/git/pureline/pureline ~/.pureline.conf
+        #source /home/git/pureline/pureline ~/.pureline.conf
     else
+    #if [ -f /home/git/trueline/trueline.sh ];then # && [ -f ~/.pureline.conf ];then
+    #    source /home/git/trueline/trueline.sh #~/.pureline.conf
+    #else
 
-        PS1='`exit=$?;if [ $exit -eq 0 ];then echo "\[\033[48;5;237;38;5;2m\]$exit";else echo "\[\033[48;5;237;38;5;1m\]$exit";fi`'
+        PS1='$(exit=$?;if [ $exit -eq 0 ];then echo "\[\033[48;5;237;38;5;2m\]$exit";else echo "\[\033[48;5;237;38;5;1m\]$exit";fi)'
         if [[ ${EUID} == 0 ]]; then
             PROMPT='#'
             USERCOLOR='\[\033[31m\]'
@@ -38,17 +51,11 @@ if [ "$TERM" != "linux" ]; then
 
     fi
 
-else
-
-    PS1='\[\033[90m\]$?'
-    #PS1='\[\033[48;5;8;38;5;0m\]$?'
-
-
 fi
 
 #. /usr/share/powerline/bindings/bash/powerline.sh
 
-HISTSIZE=1000
+HISTSIZE=10000
 HISTFILESIZE=2000
 export EDITOR=vim
 
@@ -57,6 +64,7 @@ set -o physical
 
 bind -m vi-insert "\C-l":clear-screen
 
+alias php_lint='find . -type f \( -iname "*.html" -o -iname "*.php" \) -print0|xargs -I% -r -0 -n1 -P$(nproc) php -l %'
 alias chromium="nice chromium"
 alias ls='ls -p --color=auto'
 alias grep='grep --color=always'
@@ -78,7 +86,12 @@ export LESS_TERMCAP_us=$'\E[01;32m'
 export LESS="Ri"
 
 export HOME=~
-export PATH=$HOME/bin:$PATH:/opt/bin:/sbin:/usr/sbin:$HOME/.cabal/bin:$HOME/.local/bin
+if [ -f /etc/alpine-release ];then
+  BINPATH="$HOME/bin-alpine"
+else
+  BINPATH="$HOME/bin"
+fi
+export PATH=$BINPATH:$PATH:/opt/bin:/sbin:/usr/sbin:$HOME/.cabal/bin:$HOME/.local/bin:$HOME/ericw-tools
 
 function rsyncport() {
     port=$1
@@ -135,7 +148,9 @@ else
     alias yum_chroot='sudo yum -c /home/git/dev_build2/sitscape_chroot/conf/yum/yum.conf --installroot=/home/git/dev_build2/sitscape_chroot/target --nogpgcheck --releasever=25'
 fi
 
-alias alsa_output_info="cat /proc/asound/card*/pcm0p/sub0/hw_params"
+#alias alsa_output_info="cat /proc/asound/card*/pcm0p/sub0/hw_params"
+alias alsa_output_info="cat /proc/asound/card*/*/*/hw_params"
+
 shopt -s checkwinsize
 
 alias aptget-distupgrade="apt-get -y --force-yes -o Dpkg::Options::=\"--force-confdef\" -o Dpkg::Options::=\"--force-confold\" dist-upgrade"
@@ -212,3 +227,25 @@ function sudo()
 
 #initial title
 title "[$$] ${USER}@${HOSTNAME}:$PWD"
+
+
+# Wasmer
+export WASMER_DIR="/home/ciscon/.wasmer"
+[ -s "$WASMER_DIR/wasmer.sh" ] && source "$WASMER_DIR/wasmer.sh"
+
+
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+__conda_setup="$('/home/ciscon/miniconda3/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+else
+    if [ -f "/home/ciscon/miniconda3/etc/profile.d/conda.sh" ]; then
+        . "/home/ciscon/miniconda3/etc/profile.d/conda.sh"
+    else
+        export PATH="/home/ciscon/miniconda3/bin:$PATH"
+    fi
+fi
+unset __conda_setup
+# <<< conda initialize <<<
+
