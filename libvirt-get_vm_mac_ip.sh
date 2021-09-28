@@ -64,10 +64,9 @@ for i in $hosts;do
 								if [ -f /etc/debian_version ];then
 									if [ -f /etc/os-release ];then
 										. /etc/os-release
-									else
-										ID=debian
-										VERSION_ID=$(cat /etc/debian_version)
 									fi
+									ID=${ID:-debian}
+									VERSION_ID=${VERSION_ID:-$(cat /etc/debian_version)}
 									echo -n "$ID-$VERSION_ID"
 								elif [ -f /etc/redhat-release ];then
 									ver=$(cat /etc/redhat-release)
