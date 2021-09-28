@@ -47,8 +47,14 @@ for i in $hosts;do
                     ip=$(PATH=$PATH:/usr/sbin:/sbin arp -n|grep --color=never -i "$mac" 2>/dev/null|cut -d " " -f1|tail -n1 2>/dev/null)
                     if [ -z "$ip" ];then
 						ip="NOTFOUND"
+						os="NOTFOUND"
+					else
+						#check ip for port 22
+						if hash nc;then 2>/dev/null
+							os=$(echo "garbage"|nc -w 1 $ip 22 >/dev/null 2>&1&&echo lin||echo win)
+						fi
 					fi
-                    echo -e "'$i'\t$name\t$ip\t$mac"
+                    echo -e "'$i'\t$name\t$ip\t$mac\t$os"
             fi
 		)&
         done'
