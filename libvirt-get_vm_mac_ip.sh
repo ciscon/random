@@ -13,36 +13,47 @@ vm-host6
 #host to ssh into to do arp resolution, must be on same network as vms
 proxy_host="dalek"
 
-
 for i in $hosts;do
     if [ ! -z "$i" ];then
 
-        vms=$(ssh "$i" "virsh --connect qemu:///system list --name") 2>/dev/null
+        vms=$(ssh "$i" "bash -c '
+			vms=\$(virsh --connect qemu:///system list --name) && \
+			for vm in \$vms;do
+				mac=\$(virsh --connect qemu:///system domiflist \"\$vm\"|grep --color=never vnet|head -n1|awk \"{print \\\$5}\")
+				if [ -z \"\$mac\" ];then 
+					mac=\"NOTFOUND\" 
+				fi
+				echo \"\$vm \$mac\" 
+			done
+			'") 2>/dev/null
+
         if [ -z "$vms" ];then
             errors+="failed to retrieve vm list from $i."
         fi
+
         host=${proxy_host:-$i}
-        ssh "$host" "for ip in ${network_prefix}.{1..254}; do ping -W1 -c1 \${ip} >/dev/null 2>&1 & done;wait"
-        for vm in $vms;do
-            if [ ! -z "$vm" ];then
-                #(
-                    mac=$(ssh "$i" "virsh --connect qemu:///system domiflist \"$vm\"|grep --color=never vnet|awk '{print \$5}'" 2>/dev/null)
-                    if [ -z "$mac" ];then
-                        errors+="no mac found for $vm\n"
-                    fi
-                    ip=$(ssh "$host" "PATH=$PATH:/usr/sbin:/sbin arp -n|grep --color=never -i \"$mac\" 2>/dev/null|tail -n1|awk '{print \$1}' 2>/dev/null")
+
+		#ssh into host and get ips
+		echo "$vms"|ssh "$host" '
+
+		#populate arp table on host
+		for ip in '${network_prefix}'.{1..254}; do ping -W1 -c1 \${ip} >/dev/null 2>&1 & done;wait
+
+		#get ips from arp table
+		while read line;do
+		(
+            if [ ! -z "$line" ];then
+				IFS=" " read name mac <<< $(echo "$line")
+                    ip=$(PATH=$PATH:/usr/sbin:/sbin arp -n|grep --color=never -i "$mac" 2>/dev/null|cut -d " " -f1|tail -n1 2>/dev/null)
                     if [ -z "$ip" ];then
-                        errors+="no ip found for $vm\n"
-                    else
-                        echo -e "$i\t$vm\t$ip\t$mac"
-                    fi
-                #)&
+						ip="NOTFOUND"
+					fi
+                    echo -e "'$i'\t$name\t$ip\t$mac"
             fi
-        done
+		)&
+        done'
     fi
 done
-
-wait
 
 if [ ! -z "$errors" ];then
     echo -e "\nerrors:\n$errors" 1>&2
