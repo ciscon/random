@@ -5,7 +5,7 @@ mysqldir="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)"
 mysqlbase="$(basename $mysqldir)"
 pidfile="/run/$mysqlbase/mysqld.pid"
 
-if [ -f "$pidfile/asdf" ];then
+if [ -f "$pidfile" ];then
 	kill $(cat "$pidfile")
 else
 	echo "no pidfile found.  attempting to kill process by name."
