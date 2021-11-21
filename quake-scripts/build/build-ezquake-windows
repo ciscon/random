@@ -19,8 +19,6 @@ if [ -z "$remotehead" ];then
   exit 1
 fi
 
-mkdir -p "$buildroot"
-
 if [ "$force" != "1" ];then
   #check whether or not we need to proceed
   for bin in "${bindir}/"ezquake-*-??????.zip;do
@@ -35,9 +33,10 @@ fi
 if [ -d "$gitdir" ];then
   rm -rf "$gitdir"
   sync
-  git clone "$gitrepo" "$gitdir" || exit 1
 fi
 
+mkdir -p "$buildroot"
+git clone "$gitrepo" "$gitdir" || exit 1
 cd "$gitdir"
 git checkout master > /dev/null 2>&1
 git reset --hard origin/master >/dev/null 2>&1

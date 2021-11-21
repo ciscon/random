@@ -37,7 +37,6 @@ fi
 
 mkdir -p "$buildroot"
 git clone "$gitrepo" "$gitdir" || exit 1
-
 cd "$gitdir"
 git checkout master > /dev/null 2>&1
 git reset --hard origin/master >/dev/null 2>&1
