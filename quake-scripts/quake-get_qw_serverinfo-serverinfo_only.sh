@@ -9,12 +9,9 @@ fi
 
 quakestat -qwm master.quakeservers.net > /tmp/quakeservers.tmp
 quakestat -qwm qwmaster.fodquake.net >> /tmp/quakeservers.tmp
-sort -u /tmp/quakeservers.tmp > /tmp/quakeservers.tmp.1
+awk -F'[ :]' '{print $3 , $4}' /tmp/quakeservers.tmp | sort -u > /tmp/quakeservers.tmp.1
 
-server=""
-port=""
-
-for both in $(awk -F'[ :]' '{print $3 , $4}' /tmp/quakeservers.tmp.1);do
+for both in $(awk -F'[ ]' '{print $1 , $2}' /tmp/quakeservers.tmp.1);do
 	if [ -z $server ];then
 		server=$both
 		continue
@@ -32,7 +29,7 @@ for both in $(awk -F'[ :]' '{print $3 , $4}' /tmp/quakeservers.tmp.1);do
 					location=$(geoiplookup $server|awk -F': ' '{print $2}')
 					echo -n "$location | "
 				fi
-				echo " $host | $server | $port | $version"
+				echo "$host | $server | $port | $version"
 			fi
 		)&
 		server=""
