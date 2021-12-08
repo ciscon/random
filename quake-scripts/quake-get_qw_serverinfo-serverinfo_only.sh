@@ -7,13 +7,14 @@ else
 	lookup=0
 fi
 
-quakestat -qwm master.quakeservers.net > /tmp/quakeservers
-quakestat -qwm qwmaster.fodquake.net >> /tmp/quakeservers
+quakestat -qwm master.quakeservers.net > /tmp/quakeservers.tmp
+quakestat -qwm qwmaster.fodquake.net >> /tmp/quakeservers.tmp
+sort -u /tmp/quakeservers.tmp > /tmp/quakeservers.tmp.1
 
 server=""
 port=""
 
-for both in $(awk -F'[ :]' '{print $3 , $4}' /tmp/quakeservers);do 
+for both in $(awk -F'[ :]' '{print $3 , $4}' /tmp/quakeservers.tmp.1);do
 	if [ -z $server ];then
 		server=$both
 		continue
