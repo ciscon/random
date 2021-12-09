@@ -1,6 +1,7 @@
 #!/bin/bash 
 # force=1 to skip revision check
 
+gitrepo="https://github.com/Iceman12k/mvdsv"
 
 #check for git
 if ! hash git 2>/dev/null;then
@@ -36,7 +37,7 @@ export CFLAGS+=" -march=native "
 
 if [ ! -d $nquakesv_home/build/mvdsv ];then
 	mkdir -p $nquakesv_home/build
-	git clone https://github.com/Iceman12k/mvdsv $nquakesv_home/build/mvdsv
+	git clone $gitrepo $nquakesv_home/build/mvdsv
 	force=1
 fi
 cd $nquakesv_home/build/mvdsv
