@@ -31,14 +31,13 @@ fi
 . /etc/profile
 export CFLAGS+=" -march=native "
 
+nquakesv_home="$HOME/nquakesv"
+
 if [ ! -d $nquakesv_home/build/ktx ];then
 	mkdir -p $nquakesv_home/build
 	git clone $gitrepo $nquakesv_home/build/ktx
 	force=1
 fi
-
-
-nquakesv_home="$HOME/nquakesv"
 
 cd $nquakesv_home/build/ktx
 

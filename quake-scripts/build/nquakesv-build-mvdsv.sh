@@ -27,13 +27,11 @@ if ! hash pkg-config 2>/dev/null;then
 	exit 1
 fi
 
-
-nquakesv_home="$HOME/nquakesv"
-
-
 #where our custom cflags/ldflags exists
 . /etc/profile
 export CFLAGS+=" -march=native "
+
+nquakesv_home="$HOME/nquakesv"
 
 if [ ! -d $nquakesv_home/build/mvdsv ];then
 	mkdir -p $nquakesv_home/build
