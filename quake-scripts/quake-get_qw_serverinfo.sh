@@ -2,7 +2,7 @@
 # poll individual quake servers and get admin information, output in csv format
 
 quakestat -qwm master.quakeservers.net > /tmp/quakeservers.1&
-quakestat -qwm qwmaster.fodquake.net >> /tmp/quakeservers.2&
+quakestat -qwm qwmaster.fodquake.net > /tmp/quakeservers.2&
 wait
 
 server=""

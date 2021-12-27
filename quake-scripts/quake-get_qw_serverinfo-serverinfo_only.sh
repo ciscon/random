@@ -23,7 +23,7 @@ else
 fi
 
 quakestat -qwm master.quakeservers.net > /tmp/quakeservers1.tmp&
-quakestat -qwm qwmaster.fodquake.net >> /tmp/quakeservers2.tmp&
+quakestat -qwm qwmaster.fodquake.net > /tmp/quakeservers2.tmp&
 wait
 awk -F'[ :]' '{print $3 , $4}' /tmp/quakeservers1.tmp /tmp/quakeservers2.tmp | sort -u > /tmp/quakeservers.tmp.1
 

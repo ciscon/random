@@ -1,7 +1,7 @@
 #!/bin/bash
 #test response time of qw server on given ports, output if there is no response or above rtt threshold
 
-host=quakecon.miami.ultrav.us
+host=inferno.baseq.fr
 ports="28501 28502"
 rtt_threshold=10
 wait_threshold=2
