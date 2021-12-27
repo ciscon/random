@@ -2,7 +2,6 @@
 # poll individual quake servers and get admin information, output in csv format
 
 delimiter="\t"
-fileoutput=/dev/stdout
 
 #uses the following programs
 uses="quakestat nc sort"
@@ -14,11 +13,6 @@ for program in $uses;do
     exit 1
   fi
 done
-
-#if output is a file, truncate it
-if [ -f "$output" ];then
-	echo -n > "$output"
-fi
 
 if hash geoiplookup 2>/dev/null;then
 	lookup=1
@@ -34,7 +28,7 @@ wait
 awk -F'[ :]' '{print $3 , $4}' /tmp/quakeservers1.tmp /tmp/quakeservers2.tmp | sort -u > /tmp/quakeservers.tmp.1
 
 #header
-echo -e "${lookuptext}host${delimiter}server${delimiter}port${delimiter}version" >> "$fileoutput"
+echo -e "${lookuptext}host${delimiter}server${delimiter}port${delimiter}version"
 
 for both in $(awk -F'[ ]' '{print $1 , $2}' /tmp/quakeservers.tmp.1);do
 	if [ -z $server ];then
@@ -46,7 +40,7 @@ for both in $(awk -F'[ ]' '{print $1 , $2}' /tmp/quakeservers.tmp.1);do
 	fi
 	if [ ! -z "$server" ] && [ ! -z "$port" ];then
 		(
-			output=$(echo -e "\xff\xff\xff\xffstatus 23" | nc -w 5 -u $server $port 2>/dev/null|head -n1|strings) 
+			output=$(echo -e "\xff\xff\xff\xffstatus 23" | nc -w 5 -u $server $port 2>/dev/null|head -n1|tr -d "\t"|strings)
 			host=$(echo "$output"|awk -F'hostname' '{print $2}'|awk -F'\' '{print $2}')
 			version=$(echo "$output"|awk -F'version' '{print $2}'|awk -F'\' '{print $2}')
 			if [ ! -z "$host" ];then
@@ -59,7 +53,7 @@ for both in $(awk -F'[ ]' '{print $1 , $2}' /tmp/quakeservers.tmp.1);do
 						locationoutput="N/A"
 					fi
 				fi
-				echo -e "${locationoutput}${delimiter}${host}${delimiter}${server}${delimiter}${port}${delimiter}${version}" >> $fileoutput
+				echo -e "${locationoutput}${delimiter}${host}${delimiter}${server}${delimiter}${port}${delimiter}${version}"
 			fi
 		)&
 		server=""
