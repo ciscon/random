@@ -4,6 +4,17 @@
 delimiter="\t"
 fileoutput=/dev/stdout
 
+#uses the following programs
+uses="quakestat nc sort"
+
+#test for needed programs
+for program in $uses;do
+  if ! hash $program 2>/dev/null;then
+    echo "$program not installed.  bailing out."
+    exit 1
+  fi
+done
+
 #if output is a file, truncate it
 if [ -f "$output" ];then
 	echo -n > "$output"
@@ -17,9 +28,10 @@ else
 	lookuptext=
 fi
 
-quakestat -qwm master.quakeservers.net > /tmp/quakeservers.tmp
-quakestat -qwm qwmaster.fodquake.net >> /tmp/quakeservers.tmp
-awk -F'[ :]' '{print $3 , $4}' /tmp/quakeservers.tmp | sort -u > /tmp/quakeservers.tmp.1
+quakestat -qwm master.quakeservers.net > /tmp/quakeservers1.tmp&
+quakestat -qwm qwmaster.fodquake.net >> /tmp/quakeservers2.tmp&
+wait
+awk -F'[ :]' '{print $3 , $4}' /tmp/quakeservers1.tmp /tmp/quakeservers2.tmp | sort -u > /tmp/quakeservers.tmp.1
 
 #header
 echo -e "${lookuptext}host${delimiter}server${delimiter}port${delimiter}version" >> "$fileoutput"
