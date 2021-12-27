@@ -1,15 +1,16 @@
 #!/bin/bash
 # poll individual quake servers and get admin information, output in csv format
 
-quakestat -qwm master.quakeservers.net > /tmp/quakeservers
-quakestat -qwm qwmaster.fodquake.net >> /tmp/quakeservers
+quakestat -qwm master.quakeservers.net > /tmp/quakeservers.1&
+quakestat -qwm qwmaster.fodquake.net >> /tmp/quakeservers.2&
+wait
 
 server=""
 port=""
 
 declare -A admins
 
-output=$(for both in $(awk -F'[ :]' '{print $3 , $4}' /tmp/quakeservers);do 
+output=$(for both in $(awk -F'[ :]' '{print $3 , $4}' /tmp/quakeservers.[0-9]);do
         if [ -z $server ];then
             server=$both
             continue
