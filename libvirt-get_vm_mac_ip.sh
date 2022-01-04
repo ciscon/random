@@ -22,70 +22,78 @@ if [ "$get_os_version" == 1 ];then
 	ssh-add "$HOME/.ssh/id_rsa" >/dev/null 2>&1
 fi
 
-
+vms=
 for i in $hosts;do
     if [ ! -z "$i" ];then
-
-        vms=$(ssh "$i" "bash -c '
+        vms+=$(ssh "$i" "bash -c '
 			vms=\$(virsh --connect qemu:///system list --name) && \
 			for vm in \$vms;do
 				mac=\$(virsh --connect qemu:///system domiflist \"\$vm\"|grep --color=never vnet|head -n1|awk \"{print \\\$5}\")
 				if [ -z \"\$mac\" ];then 
 					mac=\"NOTFOUND\" 
 				fi
-				echo \"\$vm \$mac\" 
+				echo \"'$i' \$vm \$mac\" 
 			done
 			'") 2>/dev/null
-
         if [ -z "$vms" ];then
             errors+="failed to retrieve vm list from $i."
         fi
-
-        host=${proxy_host:-$i}
-
-		#ssh into host and get ips
-		echo "$vms"|ssh "$host" '
-
-			#populate arp table on host
-			for ip in '${network_prefix}'.{1..254}; do ping -W1 -c1 \${ip} >/dev/null 2>&1 & done;wait
-
-			#get ips from arp table
-			while read line;do
-			(
-        	    if [ ! -z "$line" ];then
-					IFS=" " read name mac <<< $(echo "$line")
-        	            ip=$(PATH=$PATH:/usr/sbin:/sbin arp -n|grep --color=never -i "$mac" 2>/dev/null|cut -d " " -f1|tail -n1 2>/dev/null)
-        	            if [ -z "$ip" ];then #no ip found
-							ip="NOTFOUND"
-							os="NOTFOUND"
-						else
-							if [ "'$get_os_version'" == "1" ];then #get linux version
-								os=$(ssh -q -o ConnectTimeout=2 $ip '\''
-								if [ -f /etc/debian_version ];then
-									if [ -f /etc/os-release ];then
-										. /etc/os-release
-									fi
-									ID=${ID:-debian}
-									VERSION_ID=${VERSION_ID:-$(cat /etc/debian_version)}
-									echo -n "$ID-$VERSION_ID"
-								elif [ -f /etc/redhat-release ];then
-									ver=$(cat /etc/redhat-release)
-									echo -n "$(echo $ver|tr "[:upper:]" "[:lower:]"|cut -d " " -f1)-$(echo $ver|sed "s/[^0-9.]//g")"
-								fi'\''||echo "windows")
-							else ##fall back to checking ip for port 22
-							if hash nc;then 2>/dev/null
-								os=$(echo "garbage"|nc -w 1 $ip 22 >/dev/null 2>&1&&echo linux||echo windows)
-							else
-								os="NOTFOUND"
-							fi
-						fi
-				fi
-				echo -e "'$i'\t$name\t$ip\t$mac\t$os"
-				fi
-			)&
-		done'
 	fi
+	vms+=$'\n'
 done
+
+host=${proxy_host:-$i}
+
+#ssh into host and get ips
+echo "$vms"|ssh "$host" '
+
+	#populate arp table on host
+	for ip in '${network_prefix}'.{1..254}; do ping -W1 -c1 ${ip} >/dev/null 2>&1 & done;wait
+
+	#wait up to 30 seconds for arp table to be populated
+	for i in $(seq 1 30);do
+		if [ $(PATH=$PATH:/usr/sbin:/sbin arp -n|grep --color=never "incomplete" -c 2>/dev/null) -eq 0 ];then
+			break
+		else
+			sleep 1
+		fi
+	done			
+
+	#get ips from arp table
+	while read line;do
+	(
+	    if [ ! -z "$line" ];then
+			IFS=" " read vmhost name mac <<< $(echo "$line")
+	            ip=$(PATH=$PATH:/usr/sbin:/sbin arp -n|grep --color=never -i "$mac" 2>/dev/null|cut -d " " -f1|tail -n1 2>/dev/null)
+	            if [ -z "$ip" ];then #no ip found
+					ip="NOTFOUND"
+					os="NOTFOUND"
+				else
+					if [ "'$get_os_version'" == "1" ];then #get linux version
+						os=$(ssh -q -o ConnectTimeout=2 $ip '\''
+						if [ -f /etc/debian_version ];then
+							if [ -f /etc/os-release ];then
+								. /etc/os-release
+							fi
+							ID=${ID:-debian}
+							VERSION_ID=${VERSION_ID:-$(cat /etc/debian_version)}
+							echo -n "$ID-$VERSION_ID"
+						elif [ -f /etc/redhat-release ];then
+							ver=$(cat /etc/redhat-release)
+							echo -n "$(echo $ver|tr "[:upper:]" "[:lower:]"|cut -d " " -f1)-$(echo $ver|sed "s/[^0-9.]//g")"
+						fi'\''||echo "windows")
+					else ##fall back to checking ip for port 22
+					if hash nc;then 2>/dev/null
+						os=$(echo "garbage"|nc -w 1 $ip 22 >/dev/null 2>&1&&echo linux||echo windows)
+					else
+						os="NOTFOUND"
+					fi
+				fi
+		fi
+		echo -e "$vmhost\t$name\t$ip\t$mac\t$os"
+		fi
+	)&
+done' | sort
 
 if [ ! -z "$errors" ];then
     echo -e "\nerrors:\n$errors" 1>&2
