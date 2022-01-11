@@ -1,31 +1,16 @@
 #!/bin/bash
 # force=1 to skip revision check
 
-gitrepo="https://github.com/Iceman12k/ktx"
+gitrepo="https://github.com/QW-Group/ktx.git"
+gitbranch="master"
 
-#check for git
-if ! hash git 2>/dev/null;then
-    echo "can't find git.  exiting."
-    exit 1
-fi
-
-#check for quakestat
-if ! hash quakestat 2>/dev/null;then
-    echo "can't find quakestat (debian package qstat).  exiting."
-    exit 1
-fi
-
-#check for build tools
-if ! hash make 2>/dev/null || ! hash gcc 2>/dev/null;then
-    echo "can't find make/gcc (debian package build-essential).  exiting."
-    exit 1
-fi
-
-#check for pkg-config
-if ! hash pkg-config 2>/dev/null;then
-    echo "can't find pkg-config.  exiting."
-    exit 1
-fi
+deps="git pkill quakestat make gcc pkg-config"                                                                        
+for dep in $deps;do
+       if ! hash $dep >/dev/null 2>&1;then
+               echo "missing dep $dep, bailing out."
+               exit 1
+       fi
+done
 
 #where our custom cflags/ldflags exists
 . /etc/profile
@@ -33,57 +18,95 @@ export CFLAGS+=" -march=native "
 
 nquakesv_home="$HOME/nquakesv"
 
-if [ ! -d $nquakesv_home/build/ktx ];then
-	mkdir -p $nquakesv_home/build
-	git clone $gitrepo $nquakesv_home/build/ktx
+#check current remote revision
+remotehead=$(git ls-remote "$gitrepo" HEAD|head -1|awk '{print $1}'|cut -c1-6)
+
+if [ -z "$remotehead" ];then
+  echo "couldn't retrieve remote head"
+  exit 1
+fi
+
+if [ "$force" != "1" ];then
+  #check whether or not we need to proceed
+  for bin in "${nquakesv_home}/ktx/"qwprogs-*-??????.so;do
+    temprev=$(echo "$bin"|awk -F'[.-]' '{print $(NF-1)}')
+    if [ "$temprev" = "$remotehead" ];then
+      echo "revision already built, exiting."
+      exit 0
+    fi
+  done
+fi
+
+if [ ! -d "$nquakesv_home/build/ktx" ];then
+	mkdir -p "$nquakesv_home/build"
+	echo "cloning repo..."
+	git clone $gitrepo "$nquakesv_home/build/ktx" >/dev/null 2>&1
 	force=1
 fi
 
-cd $nquakesv_home/build/ktx
+cd "$nquakesv_home/build/ktx"
 
 if [ "$force" != "1" ];then
-	update=$(git reset --hard >/dev/null 2>&1;git pull 2>&1|grep Updating -c)
-else
-	update=1
+	echo "updating git repo..."
+	git remote set-url origin "$gitrepo"
+	git reset --hard origin/$gitbranch >/dev/null 2>&1
+	git clean -qfdx >/dev/null 2>&1
+	git pull >/dev/null 2>&1
+	if [ $? -ne 0 ];then
+		echo "failed to update git, bailing out."
+		exit 2
+	fi
 fi
 
 set -e
 
-if [ $update -gt 0 ];then
+VERSION=$(sed -n 's/.*MOD_VERSION.*"\(.*\)".*/\1/p' include/g_local.h)
+REVISION=$(git log -n 1|head -1|awk '{print $2}'|cut -c1-6)
 
-	(make clean||true)
+echo "configuring source..."
+(make clean||true) >/dev/null 2>&1
+if [ -f ./CMakeLists.txt ];then
+	cmake . >/dev/null 2>&1
+	TARGETBUILD=
+else
 	chmod +x configure
-	./configure
-	(make clean||true)
-
-	##wait until all ports are empty
-	declare -A dirtyports
-	while [ 1 ];do
-		if [ ${#dirtyports[@]} -ne 0 ];then
-			clean=1
-			for key in "${!dirtyports[@]}";do
-				if [ "${dirtyports[$key]}" = 1 ];then
-					echo "clean 0"
-					clean=0         
-				fi
-			done
-			if [ $clean -eq 1 ];then
-				break
-			fi
-		fi
-		for portfile in $HOME/.nquakesv/ports/*;do
-			port=$(basename $portfile)
-			clients=$(quakestat -raw ',' -qws localhost:$port -P -nh|grep -a -v '^$'|wc -l)
-			if [ $clients -lt 2 ];then
-				dirtyports[$port]=0
-			else
-				dirtyports[$port]=1
-			fi
-			sleep 1
-		done
-	done 
-
-	nice make -j3 build-dlbots && cp qwprogs.so $nquakesv_home/ktx/qwprogs.so && strip $nquakesv_home/ktx/qwprogs.so
-
+	./configure >/dev/null 2>&1
+	TARGETBUILD=build-dlbots
 fi
+(make clean||true) >/dev/null 2>&1
 
+##wait until all ports are empty
+declare -A dirtyports
+while [ 1 ];do
+	if [ ${#dirtyports[@]} -ne 0 ];then
+		clean=1
+		for key in "${!dirtyports[@]}";do
+			if [ "${dirtyports[$key]}" = 1 ];then
+				echo "clean 0"
+				clean=0         
+			fi
+		done
+		if [ $clean -eq 1 ];then
+			break
+		fi
+	fi
+	for portfile in $HOME/.nquakesv/ports/*;do
+		port=$(basename $portfile)
+		clients=$(quakestat -raw ',' -qws localhost:$port -P -nh|grep -a -v '^$'|wc -l)
+		if [ $clients -lt 2 ];then
+			dirtyports[$port]=0
+		else
+			dirtyports[$port]=1
+		fi
+		sleep 1
+	done
+done 
+
+echo "building..."
+
+nice make -j3 $TARGETBUILD >/dev/null 2>&1 && \
+	cp qwprogs.so "$nquakesv_home/ktx/qwprogs-${VERSION}-${REVISION}.so" && \
+	strip "$nquakesv_home/ktx/qwprogs-${VERSION}-${REVISION}.so" && \
+	ln -sf "qwprogs-${VERSION}-${REVISION}.so" "$nquakesv_home/ktx/qwprogs.so"
+
+echo "complete."

@@ -1,31 +1,16 @@
-#!/bin/bash 
+#!/bin/bash
 # force=1 to skip revision check
 
-gitrepo="https://github.com/Iceman12k/mvdsv"
+gitrepo="https://github.com/QW-Group/mvdsv.git"
+gitbranch="master"
 
-#check for git
-if ! hash git 2>/dev/null;then
-	echo "can't find git.  exiting."
-	exit 1
-fi
-
-#check for quakestat
-if ! hash quakestat 2>/dev/null;then
-	echo "can't find quakestat (debian package qstat).  exiting."
-	exit 1
-fi
-
-#check for build tools
-if ! hash make 2>/dev/null || ! hash gcc 2>/dev/null;then
-	echo "can't find make/gcc (debian package build-essential).  exiting."
-	exit 1
-fi
-
-#check for pkg-config
-if ! hash pkg-config 2>/dev/null;then
-	echo "can't find pkg-config.  exiting."
-	exit 1
-fi
+deps="git pkill quakestat make gcc pkg-config"
+for dep in $deps;do
+       if ! hash $dep >/dev/null 2>&1;then
+               echo "missing dep $dep, bailing out."
+               exit 1
+       fi
+done
 
 #where our custom cflags/ldflags exists
 . /etc/profile
@@ -33,60 +18,98 @@ export CFLAGS+=" -march=native "
 
 nquakesv_home="$HOME/nquakesv"
 
-if [ ! -d $nquakesv_home/build/mvdsv ];then
-	mkdir -p $nquakesv_home/build
-	git clone $gitrepo $nquakesv_home/build/mvdsv
-	force=1
+#check current remote revision
+remotehead=$(git ls-remote "$gitrepo" HEAD|head -1|awk '{print $1}'|cut -c1-6)
+
+if [ -z "$remotehead" ];then
+  echo "couldn't retrieve remote head"
+  exit 1
 fi
-cd $nquakesv_home/build/mvdsv
 
 if [ "$force" != "1" ];then
-	update=$(git reset --hard >/dev/null 2>&1;git pull 2>&1|grep Updating -c)
-else
-	update=1
+  #check whether or not we need to proceed
+  for bin in "${nquakesv_home}/"mvdsv-*-??????;do
+    temprev=$(echo "$bin"|awk -F'[.-]' '{print $NF}')
+    if [ "$temprev" = "$remotehead" ];then
+      echo "revision already built, exiting."
+      exit 0
+    fi
+  done
 fi
 
-if [ $update -gt 0 ];then
+if [ ! -d "$nquakesv_home/build/mvdsv" ];then
+	mkdir -p "$nquakesv_home/build"
+	echo "cloning repo..."
+	git clone $gitrepo "$nquakesv_home/build/mvdsv" >/dev/null 2>&1
+	force=1
+fi
 
-	cd $nquakesv_home/build/mvdsv/build/make
+cd "$nquakesv_home/build/mvdsv"
 
-	(make clean||true)
+if [ "$force" != "1" ];then
+	echo "updating git repo..."
+	git remote set-url origin "$gitrepo"
+	git reset --hard origin/$gitbranch >/dev/null 2>&1
+	git clean -qfdx >/dev/null 2>&1
+	git pull >/dev/null 2>&1
+	if [ $? -ne 0 ];then
+		echo "failed to update git, bailing out."
+		exit 2
+	fi
+fi
+
+set -e
+
+VERSION=$(sed -n 's/.*SERVER_VERSION.*"\(.*\)".*/\1/p' src/version.h)
+REVISION=$(git log -n 1|head -1|awk '{print $2}'|cut -c1-6)
+
+echo "configuring source..."
+(make clean||true) >/dev/null 2>&1
+if [ -f ./CMakeLists.txt ];then
+	cmake . >/dev/null 2>&1
+elif [ -f ./configure ];then
 	chmod +x configure
-	./configure
-	(make clean||true)
-
-	sed  -i "s/^BASE_CFLAGS=/BASE_CFLAGS=${CFLAGS} /g" Makefile
-	sed  -i "s/^FORCE32BITFLAGS.*//g" Makefile
-
-	##wait until all ports are empty                                                                                                                                                                                                           
-	declare -A dirtyports
-	while [ 1 ];do
-		if [ ${#dirtyports[@]} -ne 0 ];then
-			clean=1
-			for key in "${!dirtyports[@]}";do
-				if [ "${dirtyports[$key]}" = 1 ];then
-					echo "clean 0"
-					clean=0
-				fi
-			done
-			if [ $clean -eq 1 ];then
-				break
-			fi
-		fi
-		for portfile in $HOME/.nquakesv/ports/*;do
-			port=$(basename $portfile)
-			clients=$(quakestat -raw ',' -qws localhost:$port -P -nh|grep -a -v '^$'|wc -l)
-			if [ $clients -lt 2 ];then
-				dirtyports[$port]=0
-			else
-				dirtyports[$port]=1
-			fi
-			sleep 1
-		done
-	done
-
-	nice make -j3 && strip mvdsv && \
-		(pkill -f "mvdsv -port"||true);sleep 1;(pkill -9 -f "mvdsv -port"||true) ; \
-		cp mvdsv $nquakesv_home/mvdsv
-
+	./configure >/dev/null 2>&1
+else
+	cd ./build/make
+	chmod +x configure
+	./configure >/dev/null 2>&1
 fi
+(make clean||true) >/dev/null 2>&1
+
+##wait until all ports are empty
+declare -A dirtyports
+while [ 1 ];do
+	if [ ${#dirtyports[@]} -ne 0 ];then
+		clean=1
+		for key in "${!dirtyports[@]}";do
+			if [ "${dirtyports[$key]}" = 1 ];then
+				echo "clean 0"
+				clean=0         
+			fi
+		done
+		if [ $clean -eq 1 ];then
+			break
+		fi
+	fi
+	for portfile in $HOME/.nquakesv/ports/*;do
+		port=$(basename $portfile)
+		clients=$(quakestat -raw ',' -qws localhost:$port -P -nh|grep -a -v '^$'|wc -l)
+		if [ $clients -lt 2 ];then
+			dirtyports[$port]=0
+		else
+			dirtyports[$port]=1
+		fi
+		sleep 1
+	done
+done 
+
+echo "building..."
+
+nice make -j3 >/dev/null 2>&1 && \
+	(pkill -f "mvdsv -port"||true);sleep 1;(pkill -9 -f "mvdsv -port"||true) >/dev/null 2>&1 ; \
+	cp mvdsv "$nquakesv_home/mvdsv-${VERSION}-${REVISION}" && \
+	strip "$nquakesv_home/mvdsv-${VERSION}-${REVISION}" && \
+	ln -sf "mvdsv-${VERSION}-${REVISION}" "$nquakesv_home/mvdsv"
+
+echo "complete."
