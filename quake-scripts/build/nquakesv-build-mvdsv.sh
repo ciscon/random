@@ -4,7 +4,7 @@
 gitrepo="https://github.com/QW-Group/mvdsv.git"
 gitbranch="master"
 
-deps="git pkill quakestat make gcc pkg-config"
+deps="git pkill quakestat make gcc pkg-config cmake"
 for dep in $deps;do
        if ! hash $dep >/dev/null 2>&1;then
                echo "missing dep $dep, bailing out."
