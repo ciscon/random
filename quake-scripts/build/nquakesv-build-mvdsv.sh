@@ -84,8 +84,9 @@ while [ 1 ];do
 		clean=1
 		for key in "${!dirtyports[@]}";do
 			if [ "${dirtyports[$key]}" = 1 ];then
-				echo "clean 0"
+				echo "client(s) connected to port $key, waiting."
 				clean=0         
+				sleep 5
 			fi
 		done
 		if [ $clean -eq 1 ];then
