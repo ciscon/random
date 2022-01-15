@@ -46,11 +46,14 @@ fi
 
 cd "$nquakesv_home/build/ktx"
 
+
+echo "resetting git repo..."
+git remote set-url origin "$gitrepo" >/dev/null 2>&1
+git reset --hard origin/$gitbranch >/dev/null 2>&1
+git clean -qfdx >/dev/null 2>&1
+
 if [ "$force" != "1" ];then
 	echo "updating git repo..."
-	git remote set-url origin "$gitrepo"
-	git reset --hard origin/$gitbranch >/dev/null 2>&1
-	git clean -qfdx >/dev/null 2>&1
 	git pull >/dev/null 2>&1
 	if [ $? -ne 0 ];then
 		echo "failed to update git, bailing out."
@@ -64,7 +67,6 @@ VERSION=$(sed -n 's/.*MOD_VERSION.*"\(.*\)".*/\1/p' include/g_local.h)
 REVISION=$(git log -n 1|head -1|awk '{print $2}'|cut -c1-6)
 
 echo "configuring source..."
-(make clean||true) >/dev/null 2>&1
 if [ -f ./CMakeLists.txt ];then
 	cmake . >/dev/null 2>&1
 	TARGETBUILD=
@@ -73,7 +75,6 @@ else
 	./configure >/dev/null 2>&1
 	TARGETBUILD=build-dlbots
 fi
-(make clean||true) >/dev/null 2>&1
 
 ##wait until all ports are empty
 declare -A dirtyports
