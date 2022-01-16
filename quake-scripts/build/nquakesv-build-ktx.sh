@@ -68,7 +68,9 @@ REVISION=$(git log -n 1|head -1|awk '{print $2}'|cut -c1-6)
 
 echo "configuring source..."
 if [ -f ./CMakeLists.txt ];then
-	cmake . >/dev/null 2>&1
+	mkdir -p build
+	cd build
+	cmake .. >/dev/null 2>&1
 	TARGETBUILD=
 else
 	chmod +x configure
