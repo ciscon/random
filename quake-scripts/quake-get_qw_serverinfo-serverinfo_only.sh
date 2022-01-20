@@ -3,8 +3,11 @@
 
 delimiter="\t"
 
+tempdir="/tmp/quakeservers_info"
+mkdir -p "$tempdir"
+
 #uses the following programs
-uses="quakestat nc sort"
+uses="quakestat nc sort jq"
 
 #test for needed programs
 for program in $uses;do
@@ -22,10 +25,11 @@ else
 	lookuptext=
 fi
 
-quakestat -qwm master.quakeservers.net > /tmp/quakeservers1.tmp&
-quakestat -qwm qwmaster.fodquake.net > /tmp/quakeservers2.tmp&
+quakestat  -R -json -u -qwm master.quakeservers.net > $tempdir/quakeservers.1&
+quakestat  -R -json -u -qwm qwmaster.fodquake.net > $tempdir/quakeservers.2&
 wait
-awk -F'[ :]' '{print $3 , $4}' /tmp/quakeservers1.tmp /tmp/quakeservers2.tmp | sort -u > /tmp/quakeservers.tmp.1
+
+/asdf
 
 #header
 echo -e "${lookuptext}host${delimiter}server${delimiter}port${delimiter}version"
