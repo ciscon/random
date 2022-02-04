@@ -71,17 +71,17 @@ echo "$vms"|ssh "$host" '
 				else
 					if [ "'$get_os_version'" == "1" ];then #get linux version
 						os=$(ssh -q -o ConnectTimeout=2 $ip '\''
-						if [ -f /etc/debian_version ];then
+						if [ -e /etc/debian_version ];then
 							if [ -f /etc/os-release ];then
 								. /etc/os-release
 							fi
 							ID=${ID:-debian}
 							VERSION_ID=${VERSION_ID:-$(cat /etc/debian_version)}
-							echo -n "$ID-$VERSION_ID"
+							echo -n "linux-${ID}-${VERSION_ID}"
 						elif [ -e /etc/redhat-release ];then
 							ver=$(cat /etc/redhat-release)
-							echo -n "$(echo $ver|tr "[:upper:]" "[:lower:]"|cut -d " " -f1)-$(echo $ver|sed "s/[^0-9.]//g")"
-						fi'\''||echo "windows")
+							echo -n "linux-$(echo $ver|tr "[:upper:]" "[:lower:]"|cut -d " " -f1)-$(echo $ver|sed "s/[^0-9.]//g")"
+						fi'\''||(echo "garbage"|nc -w 1 $ip 22 >/dev/null 2>&1&&echo linux||echo windows))
 					else ##fall back to checking ip for port 22
 					if hash nc;then 2>/dev/null
 						os=$(echo "garbage"|nc -w 1 $ip 22 >/dev/null 2>&1&&echo linux||echo windows)
