@@ -78,7 +78,7 @@ echo "$vms"|ssh "$host" '
 							ID=${ID:-debian}
 							VERSION_ID=${VERSION_ID:-$(cat /etc/debian_version)}
 							echo -n "$ID-$VERSION_ID"
-						elif [ -f /etc/redhat-release ];then
+						elif [ -e /etc/redhat-release ];then
 							ver=$(cat /etc/redhat-release)
 							echo -n "$(echo $ver|tr "[:upper:]" "[:lower:]"|cut -d " " -f1)-$(echo $ver|sed "s/[^0-9.]//g")"
 						fi'\''||echo "windows")

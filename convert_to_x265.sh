@@ -2,8 +2,8 @@
 #recursively convert videos to x265
 
 postpend="-ciscon-x265"
-preset="medium"
-crf=20
+preset="slow"
+crf=18
 
 let procs=$(nproc)/2-1
 
