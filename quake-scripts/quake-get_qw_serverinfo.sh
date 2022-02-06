@@ -51,8 +51,9 @@ while IFS=$'\t' read hostname name version;do
 			else
 				locationoutput="N/A"
 			fi
+			locationoutput+=$delimiter
 		fi
-		echo -e "${locationoutput}${delimiter}${name}${delimiter}${server}${delimiter}${port}${delimiter}${version}"
+		echo -e "${locationoutput}${name}${delimiter}${server}${delimiter}${port}${delimiter}${version}"
 		server=""
 		port=""
 	fi
