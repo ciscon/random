@@ -3,6 +3,9 @@
 
 delimiter="\t"
 
+#if using mmdblookup, location of db
+mmdblocation="/var/lib/GeoIP/GeoLite2-Country.mmdb"
+
 tempdir="/tmp/quakeservers_info"
 mkdir -p "$tempdir"
 
@@ -17,9 +20,11 @@ for program in $uses;do
 	fi
 done
 
+lookuptext="location${delimiter}"
 if hash geoiplookup 2>/dev/null;then
 	lookup=1
-	lookuptext="location${delimiter}"
+elif hash mmdblookup 2>/dev/null;then
+	lookup=2
 else
 	lookup=0
 	lookuptext=
@@ -44,8 +49,12 @@ while IFS=$'\t' read hostname name version;do
 
 	if [ ! -z "$server" ] && [ ! -z "$port" ];then
 		locationoutput=
-		if [ $lookup -eq 1 ];then
-			location=$(geoiplookup $server|awk -F': ' '{print $2}')
+		if [ $lookup -gt 0 ];then
+			if [ $lookup -eq 1 ];then
+				location=$(geoiplookup $server|awk -F': ' '{print $2}')
+			else
+				location=$(mmdblookup --file $mmdblocation --ip $server country iso_code 2>/dev/null|tr -d '\n'|awk -F'"' '{print $2}')
+			fi
 			if [ ! -z "$location" ];then
 				locationoutput="${location}"
 			else
