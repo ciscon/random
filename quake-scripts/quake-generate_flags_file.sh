@@ -18,7 +18,7 @@ do
 	lower=$(echo $name|tr '[:upper:]' '[:lower:]')
 	if [ -f "${tempdir}/textures/scoreboard/flags/${lower}.svg" ];then continue;fi
 	urlsvg=$(echo "${url%.png}"| sed 's/\(.*\)*\/.*px.*/\1/g;s/\/thumb//g'  )
-	echo "$lower $urlsvg" >> "${tempdir}/textures/scoreboard/flags/sources.txt"
+	echo "$lower $urlsvg (public domain)" >> "${tempdir}/textures/scoreboard/flags/sources.txt"
 	curl -s "$urlsvg" > "${tempdir}/textures/scoreboard/flags/${lower}.${urlsvg##*.}"
 	convert -resize $pngsize "${tempdir}/textures/scoreboard/flags/${lower}.${urlsvg##*.}" -normalize "${tempdir}/textures/scoreboard/flags/${lower}.png"
 	pngquant --ext .png --force "${tempdir}/textures/scoreboard/flags/${lower}.png"
@@ -34,7 +34,7 @@ do
 	    lower=$(echo $name|tr '[:upper:]' '[:lower:]')
 		if [ -f "${tempdir}/textures/scoreboard/flags/${lower}.svg" ];then continue;fi
 	    urlsvg=$(echo "${url%.png}"| sed 's/\(.*\)*\/.*px.*/\1/g;s/\/thumb//g')
-		echo "$lower $urlsvg" >> "${tempdir}/textures/scoreboard/flags/sources.txt"
+		echo "$lower $urlsvg (public domain)" >> "${tempdir}/textures/scoreboard/flags/sources.txt"
 	    curl -s "$urlsvg" > "${tempdir}/textures/scoreboard/flags/${lower}."${urlsvg##*.}""
 	    convert -resize $pngsize "${tempdir}/textures/scoreboard/flags/${lower}.${urlsvg##*.}" -normalize "${tempdir}/textures/scoreboard/flags/${lower}.png"
 	    pngquant --ext .png --force "${tempdir}/textures/scoreboard/flags/${lower}.png"
