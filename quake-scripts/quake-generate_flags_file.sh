@@ -1,7 +1,7 @@
 #!/bin/bash
 
 tempdir="/tmp/quakeflags"
-pngsize="115x60"
+pngsize="115x"
 
 rm -rf "$tempdir"
 
@@ -16,7 +16,7 @@ do
 
 	echo "$name"
 	lower=$(echo $name|tr '[:upper:]' '[:lower:]')
-	urlsvg=$(echo "${url%.png}"| sed 's/\.svg\/[0-9].*/\.svg/g;s/\/thumb//g'  )
+	urlsvg=$(echo "${url%.png}"| sed 's/\(.*\)*\/.*px.*/\1/g;s/\/thumb//g'  )
 	curl -s "$urlsvg" > "${tempdir}/textures/scoreboard/flags/${lower}.${urlsvg##*.}"
 	convert -resize $pngsize "${tempdir}/textures/scoreboard/flags/${lower}.${urlsvg##*.}" -normalize "${tempdir}/textures/scoreboard/flags/${lower}.png"
 	pngquant --ext .png --force "${tempdir}/textures/scoreboard/flags/${lower}.png"
@@ -31,8 +31,7 @@ do
 		echo "$name"
 	    lower=$(echo $name|tr '[:upper:]' '[:lower:]')
 		if [ -f "${tempdir}/textures/scoreboard/flags/${lower}.svg" ];then continue;fi
-	    urlsvg=$(echo "${url%.png}"| sed 's/\.svg\/[0-9]*px.*/\.svg/g;s/\/thumb//g')
-		echo "$urlsvg"
+	    urlsvg=$(echo "${url%.png}"| sed 's/\(.*\)*\/.*px.*/\1/g;s/\/thumb//g')
 	    curl -s "$urlsvg" > "${tempdir}/textures/scoreboard/flags/${lower}."${urlsvg##*.}""
 	    convert -resize $pngsize "${tempdir}/textures/scoreboard/flags/${lower}.${urlsvg##*.}" -normalize "${tempdir}/textures/scoreboard/flags/${lower}.png"
 	    pngquant --ext .png --force "${tempdir}/textures/scoreboard/flags/${lower}.png"
