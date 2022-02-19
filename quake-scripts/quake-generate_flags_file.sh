@@ -25,7 +25,7 @@ do
 	contents+=$(echo -e '{ "code": "'${lower}'", "file": "flags/'${lower}'.png" },')
 	country=$name
 	#iso 3166-2 - uk only for now as json is too large
-	if [ "$lower" == "uk" ];then
+	if [ "$lower" == "uk" ] || [ "$lower" == "gb" ];then
 		while read na name url
 			do
 				echo "$name"
