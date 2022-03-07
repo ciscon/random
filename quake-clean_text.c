@@ -25,6 +25,7 @@ void CleanString_Init (void)
 
 	//some exceptions
 	chartbl[32] =  ' ';
+	chartbl[34] =  '"';
 	chartbl[58] =  ':';
 	chartbl[44] =  ',';
 	chartbl[10] =  '\n';
@@ -33,11 +34,10 @@ void CleanString_Init (void)
     for (i = 18; i < 29; i++)
         chartbl[i] = chartbl[i + 128] = i + 30;
 
-    // allow lowercase only
-    for (i = 'A'; i <= 'Z'; i++)
-        chartbl[i] = chartbl[i+128] = i + 'a' - 'A';
+	// letters
+    for (i = 'A'; i <= 'z'; i++)
+        chartbl[i] = i;
 
-    // brackets
     chartbl[29] = chartbl[29+128] = chartbl[128] = '(';
     chartbl[31] = chartbl[31+128] = chartbl[130] = ')';
     chartbl[16] = chartbl[16 + 128]= '[';
