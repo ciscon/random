@@ -5,10 +5,9 @@ dist="debian"
 release="testing"
 archs="i386 amd64 arm64v8 arm32v7"
 
-outputdir="$PWD/output"
 gitdir="$PWD/mvdsv"
 
-mkdir -p $outputdir $gitdir
+mkdir -p $gitdir
 
 if [ ! -d $gitdir/.git ];then
 	echo "git directory for mvdsv not found, please clone to $gitdir"
