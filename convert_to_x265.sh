@@ -5,7 +5,7 @@ postpend="-ciscon-x265"
 preset="slow"
 crf=18
 
-let procs=$(nproc)/2-1
+let procs=$(nproc)/2-2
 
 deps="ffmpeg find file nice"
 for dep in $deps;do
