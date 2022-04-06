@@ -3,7 +3,7 @@
 
 dist="debian"
 release="testing"
-archs="i386 amd64 arm64v8 armhf"
+archs="i386 amd64 arm64v8 arm32v7"
 
 outputdir="$PWD/output"
 gitdir="$PWD/mvdsv"
