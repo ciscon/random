@@ -46,13 +46,12 @@ host=${proxy_host:-$i}
 
 #ssh into host and get ips
 echo "$vms"|ssh "$host" '
-
 	#populate arp table on host
 	for ip in '${network_prefix}'.{1..254}; do ping -W1 -c1 ${ip} >/dev/null 2>&1 & done;wait
 
 	#wait up to 30 seconds for arp table to be populated
 	for i in $(seq 1 30);do
-		if [ $(PATH=$PATH:/usr/sbin:/sbin arp -n|grep --color=never "incomplete" -c 2>/dev/null) -eq 0 ];then
+		if [ $(ip neighbor|grep --color=never "INCOMPLETE" -c 2>/dev/null) -eq 0 ];then
 			break
 		else
 			sleep 1
@@ -64,7 +63,7 @@ echo "$vms"|ssh "$host" '
 	(
 	    if [ ! -z "$line" ];then
 			IFS=" " read vmhost name mac <<< $(echo "$line")
-	            ip=$(PATH=$PATH:/usr/sbin:/sbin arp -n|grep --color=never -i "$mac" 2>/dev/null|cut -d " " -f1|tail -n1 2>/dev/null)
+	            ip=$(ip neighbor|grep --color=never -i "$mac" 2>/dev/null|cut -d " " -f1|tail -n1 2>/dev/null)
 	            if [ -z "$ip" ];then #no ip found
 					ip="NOTFOUND"
 					os="NOTFOUND"
