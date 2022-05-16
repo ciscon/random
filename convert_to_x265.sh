@@ -33,8 +33,15 @@ for file in $(find . -type f);do
 			echo "checking integrity of found output file: $output ..."
 			outputcheck=$(ffmpeg -v error -i "$output" -c copy -f null - 2>&1|wc -l)
 			if [ $outputcheck -eq 0 ];then
-				echo "no errors found in file, continuing."
-				continue
+				echo "no errors found in file, checking times."
+				resulttime=$(ffprobe -i "$output" -show_entries format=duration -v quiet -of csv="p=0"| cut -f1 -d".")
+				originaltime=$(ffprobe -i "$file" -show_entries format=duration -v quiet -of csv="p=0"| cut -f1 -d".")
+				if [ "$resulttime" == "$originaltime" ];then
+					echo "length of input and output videos match, continuing."
+					continue
+				else
+					echo "lengths do not match- input: $originaltime output: $resulttime"
+				fi
 			fi
 		fi
 		echo "creating $output ..."
