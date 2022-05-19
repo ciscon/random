@@ -44,7 +44,3 @@ for i in $hosts;do
 done|sort
 
 wait
-
-if [ ! -z "$errors" ];then
-	echo -e "\nerrors:\n$errors" 1>&2
-fi
