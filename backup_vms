@@ -5,30 +5,50 @@
 #borg list ${backup_mountpoint}/${backupdir}
 #
 ##restore vm
-#nice ionice -c3 borg extract --stdout ${backup_mountpoint}/${backupdir}::LVM-DATE |nice ionice -c3 dd bs=64M of=${lvpath}/LVM iflag=fullblock oflag=direct status=progress
+#nice ionice -c3 borg extract --stdout ${backup_mountpoint}/${backupdir}::LVM-DATE |nice ionice -c3 dd bs=16M of=${lvpath}/LVM iflag=fullblock status=progress
 #
 #ssh:
-#sync;nice ionice -c3 dd iflag=fullblock if=/dev/vmvg2/fromimage bs=64M |nice pigz -1 -c - |ssh -o compression=no 10.10.100.5 "nice pigz -d | nice ionice -c3 dd iflag=fullblock oflag=direct bs=64M of=/dev/vmvg1/toimage status=progress;sync"
+#sync;dd iflag=fullblock oflag=direct if=/dev/vmvg1/hostname bs=8M |nice pigz -1 -c - |ssh -o compression=no remote_ip_address "nice pigz -d | dd iflag=fullblock oflag=direct bs=4M of=/dev/vmvg1/hostname status=progress"
 #
-#borg extract --stdout ${backup_mountpoint}/${backupdir}::LVM-DATE |dd bs=64M of=${lvpath}/LVM oflag=direct iflag=fullblock
+#borg extract --stdout ${backup_mountpoint}/${backupdir}::LVM-DATE |dd bs=8M of=${lvpath}/LVM oflag=direct iflag=fullblock
 
 date
 
+if [ $(id -u) -ne 0 ];then
+	echo "must be root"
+	exit 1
+fi
+
+error=0
+
 export BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK=yes
 export BORG_RELOCATED_REPO_ACCESS_IS_OK=yes
+export BORG_PASSPHRASE=""
+export BORG_KEY_FILE=""
 
 backup_mountpoint="/mnt/ssnas1"
-lvpath="/dev/vmvg2"
+lvpath="/dev/vmvg1"
 backupdir="vms_$(hostname)"
 
-blacklist="clean_install
-testing"
+blacklist="swap
+clone
+_testing
+clean_install"
+
+#check if script is already running
+if [[ `pgrep -f "bash.*$0"` != "$$" ]]; then
+	echo "already running"
+	exit 0
+fi
 
 #make sure ls isn't polluted
 unalias ls >/dev/null 2>&1
 
 #lvs of vms to backup
 lvs=$(ls ${lvpath}|grep -v swap)
+
+#list of storage for running vms
+running_vms=$(virsh list|awk '{print $2}'|grep --color=never -v -e Name -v -e "^$"|xargs -I% cat "/etc/libvirt/qemu/%.xml"|grep "${lvpath}")
 
 #check that backup mountpoint is mounted
 mountpoint -q ${backup_mountpoint}||mount ${backup_mountpoint} >/dev/null 2>&1
@@ -41,7 +61,7 @@ fi
 
 #create backup directory if it does not exist
 if [ ! -d ${backup_mountpoint}/${backupdir} ];then
-	borg init -e none ${backup_mountpoint}/${backupdir} >/dev/null 2>&1
+	borg init --encryption=authenticated-blake2 ${backup_mountpoint}/${backupdir} >/dev/null 2>&1
 fi
 
 #backup lvm configuration
@@ -63,11 +83,17 @@ for lv in $lvs;do
 		done
 	fi
 
+	#skip non-running vms
+	if [ $(echo "$running_vms"|grep --color=never "$lv" -c) -eq 0 ];then
+		skip=1
+	fi
+
 	if [ $skip -ne 1 ];then
 		echo "backing up $lv at `date`"
-		lvcreate -L10G -s -n backup$lv $lvpath/$lv >/dev/null 2>&1
+		lvcreate -L40G -s -n backup$lv $lvpath/$lv >/dev/null 2>&1
 		if [ $? -ne 0 ];then
-			echo "ERROR: creation of snapshot failed, skipping vm."
+			echo "ERROR: creation of snapshot failed (backup$lv $lvpath/$lv), skipping vm."
+			error=2
 			lvremove $lvpath/backup$lv -f >/dev/null 2>&1
 			continue
 			#exit 2
@@ -75,19 +101,21 @@ for lv in $lvs;do
 
 		sync
 
-		result=$(nice ionice -n 2 borg create --compression zstd,3 --chunker-params 19,23,21,4095 --read-special -v --stats ${backup_mountpoint}/${backupdir}::${lv}-`date +%Y-%m-%d-%H` $lvpath/backup$lv 2>&1)
+		result=$(nice ionice -c3 borg create --compression zstd --chunker-params 19,23,21,4095 --read-special -v --stats ${backup_mountpoint}/${backupdir}::${lv}-`date +%Y-%m-%d-%H` $lvpath/backup$lv 2>&1)
 
 
 		if [ $? -ne 0 ];then
 			echo "ERROR: backup of $lv failed, continuing."
+			error=3
 			echo "$result"
 			lvremove $lvpath/backup$lv -f >/dev/null 2>&1
-			#exit 3
+			#exit 3 
 		fi
 
 		lvremove $lvpath/backup$lv -f >/dev/null 2>&1
 		if [ $? -ne 0 ];then
 			echo "ERROR: removal of snaphot failed, continuing."
+			error=4
 			#exit 4
 		fi
 
@@ -98,5 +126,7 @@ done
 
 echo "removing old archives..."
 #echo "just running with --dry-run, remove this when we actually want to remove old backups"
-borg prune --dry-run --stats -v --keep-weekly=4 ${backup_mountpoint}/${backupdir}
-#nice ionice -n2 borg prune --save-space --stats -v --keep-within 4w ${backup_mountpoint}/${backupdir}
+#borg prune --dry-run --stats -v --keep-weekly=8 ${backup_mountpoint}/${backupdir}
+nice ionice -c3 borg prune --save-space --stats -v --keep-hourly=24 --keep-daily=7 --keep-weekly=2 ${backup_mountpoint}/${backupdir}
+
+exit $error
