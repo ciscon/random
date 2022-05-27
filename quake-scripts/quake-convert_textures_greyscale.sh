@@ -14,13 +14,14 @@ for program in $uses;do
     fi
 done
 
+id1=$(readlink -f "$id1")
 olddir=$(pwd)
 
 rm -rf $tmpdir
 mkdir -p $tmpdir
 cd $tmpdir
 
-cp /mnt/nas-quake/id1/*.pak . || exit
+cp "$id1"/*.pak . || exit
 
 for i in *.pak;do qpakman -f -e $i;done
 cd maps
