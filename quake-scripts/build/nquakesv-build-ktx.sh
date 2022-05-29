@@ -50,13 +50,16 @@ cd "$nquakesv_home/build/ktx"
 echo "resetting git repo..."
 git remote set-url origin "$gitrepo" >/dev/null 2>&1
 git fetch --all >/dev/null 2>&1
+git clean -qfdx >/dev/null 2>&1
+git reset --hard >/dev/null 2>&1
+git checkout $gitbranch >/dev/null 2>&1
 git reset --hard origin/$gitbranch >/dev/null 2>&1
 git clean -qfdx >/dev/null 2>&1
 git config pull.rebase false >/dev/null 2>&1
 
 if [ "$force" != "1" ];then
 	echo "updating git repo..."
-	output=$(git pull --no-commit >/dev/null 2>&1)
+	output=$(git pull --no-commit 2>&1)
 	if [ $? -ne 0 ];then
 		echo "failed to update git, bailing out."
 		echo "git pull output: $output"
