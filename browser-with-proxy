@@ -58,7 +58,7 @@ if [ "$drystart" = 0 ];then
 
   randcmd="head"
   if [ "$random" = "1" ];then
-    randcmd="shuff"
+    randcmd="shuf"
   fi
 
   join=";"
