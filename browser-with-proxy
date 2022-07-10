@@ -1,87 +1,101 @@
 #!/bin/bash
 # pull down list of proxies, test, and choose one at random or fastest by response time.
 
+#use a (working) proxy at random as opposed to lowest latency first
+#this will also set the browser's userdir to reference proxies used
+random=0
+#use cache (up to a day)?
+cache=1
+#cache file
+cache_file=/tmp/browser-proxy.cache
 #set this to 1 in order to start without any proxies, useful to troubleshoot issues
 drystart=0
 #firefox or chromium/chrome
 browser="chromium"
 #which country to pull proxies for
-country="uk"
+country="us"
 #test request timeout
 timeout=5
-#use a (working) proxy at random as opposed to lowest latency first
-random=0
 #we expect to get a 200 response
-testurl="https://www.google.com"
+testurl="http://www.asdf.com"
 #how many proxies to put into list, only for chromium/chrome
 limit=10
 
 #firefox uses http_proxy environment variable and only supports 1
 if [ "$browser" = "firefox" ];then
-  limit=1
+	limit=1
 fi
 
 if [ "$drystart" = 0 ];then
+	if [ $cache -eq 0 ] || [ ! -f "$cache_file" ] || [[ $(find "$cache_file" -mtime +1 -print) ]];then
+		echo "getting list"
+		rawlist=$(curl -L -s "https://free-proxy-list.net/${country}-proxy.html" 2>/dev/null)
+		if [ $? -ne 0 ];then
+			echo "failed to retrieve list"
+			exit 1
+		fi
+		list=$(echo "$rawlist"|sed 's/<tr>/\n/g'|grep --color=never '<td>'|awk -F'[<>]' '{print $3":"$7}')
+		if [ -z "$list" ];then
+			echo "failed to parse list"
+			exit 1
+		fi
 
-  echo "getting list"
-  rawlist=$(wget -q -O - "https://free-proxy-list.net/${country}-proxy.html")
-  if [ $? -ne 0 ];then
-    echo "failed to retrieve list"
-    exit 1
-  fi
-  list=$(echo "$rawlist"|sed 's/<tr>/\n/g'|grep --color=never '<td>'|awk -F'[<>]' '{print $3":"$7}')
-  if [ -z "$list" ];then
-    echo "failed to parse list"
-    exit 1
-  fi
- 
-  echo "testing proxies" 
-  output=$(
-    for host in $list;do
-      (
-        (
-          ip=$(echo "$host" | cut -f1 -d:)
-          port=$(echo "$host" | cut -f2 -d:)
-          temptime=$(time (echo -e "GET ${testurl}\n\n\n"|nc -w $timeout $ip $port 2>/dev/null|grep -q '200 OK'||echo "FAIL") 2>&1)
-          if [ $(grep -c 'FAIL' <<< $temptime) -eq 0 ];then
-            time=$(echo "$temptime"|grep --color=never real|awk '{print $2}')
-            echo "$time $ip $port"
-          fi
-        )& 2>/dev/null
-      ) 
-    done | sort -n
-  )
-  if [ -z "$output" ];then
-    echo "no servers responded properly and in time."
-    exit 1
-  fi
+		echo "testing proxies"
+		output=$(
+			for host in $list;do
+				(
+					(
+						ip=$(echo "$host" | cut -f1 -d:)
+						port=$(echo "$host" | cut -f2 -d:)
+						temptime=$(time (curl -k --max-time $timeout -x "http://$ip:$port" "$testurl" 2>/dev/null||echo "FAIL") 2>&1)
+						if [ $(grep -c 'FAIL' <<< $temptime) -eq 0 ];then
+							time=$(echo "$temptime"|grep --color=never real|awk '{print $2}')
+							echo "$time $ip $port"
+						fi
+					)& 2>/dev/null
+				) 
+			done | sort -n
+		)
+		echo "$output" > "$cache_file"
+	fi
+	output=$(cat "$cache_file")
+	if [ -z "$output" ];then
+		echo "no servers responded properly and in time."
+		exit 1
+	fi
 
-  randcmd="head"
-  if [ "$random" = "1" ];then
-    randcmd="shuf"
-  fi
+	echo "found $(echo $output|wc -l)"
 
-  join=";"
-  if [ "$limit" -eq 1 ];then
-    join=""
-  fi
-  for i in $(seq 1 $limit);do
-    if [ -z "$output" ];then
-      break
-    fi
-    http_proxy+=$(echo "$output"|$randcmd -n1|awk '{print "http://"$2":"$3}')"$join"
-    output=$(echo "$output"|tail -n +2)
-  done
+	randcmd="head"
+	if [ "$random" = "1" ];then
+		randcmd="shuf"
+	fi
+
+	join=";"
+	if [ "$limit" -eq 1 ];then
+		join=""
+	fi
+	for i in $(seq 1 $limit);do
+		if [ -z "$output" ];then
+			break
+		fi
+		http_proxy+=$(echo "$output"|$randcmd -n1|awk '{print "http://"$2":"$3}')"$join"
+		output=$(echo "$output"|tail -n +2)
+	done
 
 fi
 
 echo "using http proxy $http_proxy"
-
-if [ "$browser" = "firefox" ];then
-  export http_proxy
-  export https_proxy=$http_proxy
-  $browser -CreateProfile "firefox-${country}"
-  $browser -P "firefox-${country}"
+if [ $random -eq 1 ];then
+	datadir=/tmp/.$(echo "${http_proxy}"|sed 's/[^[:alnum:]]//g')
 else
-  $browser --user-data-dir=${HOME}/.chromium-${country} --proxy-server="$http_proxy" $*
+	datadir=${HOME}/.browser-proxy-${country}
+fi
+if [ "$browser" = "firefox" ];then
+	export http_proxy
+	export https_proxy=$http_proxy
+	$browser -CreateProfile "$datadir"
+	$browser -P "firefox-${country}"
+else
+	$browser --user-data-dir="$datadir" --proxy-server="$http_proxy" $*
 fi
