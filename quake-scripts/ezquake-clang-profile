@@ -2,7 +2,7 @@
 
 quaketestscript="quake +timedemo demos/fps4"
 gitdir="/home/git/ezquake-source-official"
-optimizations="-march=native -O3 -fno-stack-protector -pipe"
+optimizations="-march=native -mtune=native -O3 -fno-stack-protector -pipe"
 clangver="15"
 profiledir="/tmp/ezquakeprofile"
 
@@ -17,8 +17,8 @@ CFLAGS=$optimizations -fprofile-instr-generate=$profiledir/default.profraw
 LDFLAGS=$optimizations -fprofile-instr-generate=$profiledir/default.profraw" > "$profiledir/.config_1"
 
 echo "CC=clang-$clangver
-CFLAGS=$optimizations -fprofile-use=$profiledir/default.profdata -flto
-LDFLAGS=$optimizations -fprofile-use=$profiledir/default.profdata -flto" > "$profiledir/.config_2"
+CFLAGS=$optimizations -fprofile-use=$profiledir/default.profdata -flto=thin
+LDFLAGS=$optimizations -fprofile-use=$profiledir/default.profdata -flto=thin" > "$profiledir/.config_2"
 
 make clean
 EZ_CONFIG_FILE="$profiledir/.config_1" make -j$(nproc)
