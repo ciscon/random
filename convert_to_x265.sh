@@ -36,7 +36,9 @@ for file in $(find . -type f);do
 				echo "no errors found in file, checking times."
 				resulttime=$(ffprobe -i "$output" -show_entries format=duration -v quiet -of csv="p=0"| cut -f1 -d".")
 				originaltime=$(ffprobe -i "$file" -show_entries format=duration -v quiet -of csv="p=0"| cut -f1 -d".")
-				if [ "$resulttime" == "$originaltime" ];then
+				[[ $resulttime == ?(-)+([[:digit:]]) ]] || resulttime=0
+				[[ $originaltime == ?(-)+([[:digit:]]) ]] || originaltime=0
+				if [ $resulttime -ge $(($originaltime-1)) ] && [ $resulttime -le $(($originaltime+1)) ];then
 					echo "length of input and output videos match, continuing."
 					continue
 				else
