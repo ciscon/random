@@ -33,7 +33,7 @@ if [ "$force" != "1" ];then
 fi
 
 docker pull debian:unstable
-docker run  --net=host --rm --device /dev/fuse --cap-add SYS_ADMIN -v "$buildroot":/build debian:unstable nice -n 20 bash -c 'export DEBIAN_FRONTEND=noninteractive;mkdir -p /etc/apt/apt.conf.d;echo "APT::Install-Recommends "0"; APT::AutoRemove::RecommendsImportant "false";" >> /etc/apt/apt.conf.d/01lean && apt-get -qqy update && apt-get -qqy install file libfuse2 git make sudo ca-certificates && git clone "'$gitrepo'" /build/ && cd /build && ./manual_creation.sh;chown -Rf '$(id -u ${USER})':'$(id -g ${USER})' /build -R'
+docker run  --net=host --rm --device /dev/fuse --cap-add SYS_ADMIN -v "$buildroot":/build debian:unstable nice -n 20 bash -c 'export DEBIAN_FRONTEND=noninteractive;mkdir -p /etc/apt/apt.conf.d;echo "APT::Install-Recommends "0"; APT::AutoRemove::RecommendsImportant "false";" >> /etc/apt/apt.conf.d/01lean && apt-get -qqy update && apt-get -qqy install libpcre3-dev curl file libfuse2 git make sudo ca-certificates && git clone "'$gitrepo'" /build/ && cd /build && ./manual_creation.sh;chown -Rf '$(id -u ${USER})':'$(id -g ${USER})' /build -R'
 
 
 if [ $? -eq 0 ];then
