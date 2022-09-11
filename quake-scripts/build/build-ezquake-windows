@@ -14,7 +14,7 @@ fi
 
 unset CC
 export CFLAGS+=" -pipe "
-export LDFLAGS+="$CFLAGS"
+export LDFLAGS="$CFLAGS"
 
 gitrepo="https://github.com/ezQuake/ezquake-source.git"
 #append this to binary and work directories for other repos (ie -reki)
