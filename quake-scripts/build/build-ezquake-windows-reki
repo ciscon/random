@@ -3,14 +3,25 @@
 
 set -e
 
-unset CC
-#export CFLAGS=" "
-#export LDFLAGS="$CFLAGS"
+if [ $(gcc -dumpversion) -ge 12 ];then
+	ezquake_config=".config_windows"
+	compiler=gcc
+	CFLAGS=" -flto=$(nproc) -fwhole-program "
+else
+	ezquake_config=".config_windows-clang"
+	compiler=clang
+fi
 
+unset CC
+export CFLAGS+=" -pipe "
+export LDFLAGS+="$CFLAGS"
+
+gitrepo="https://github.com/Iceman12k/ezquake-source.git"
+#append this to binary and work directories for other repos (ie -reki)
+ezquake_name_append="-reki"
 bindir="/mnt/nas-quake/binaries/win/ezquake"
 buildroot="/tmp/build"
-gitdir="${buildroot}/ezquake-source-reki"
-gitrepo="https://github.com/Iceman12k/ezquake-source.git"
+gitdir="${buildroot}/ezquake-source${ezquake_name_append}"
 #using purely to check revision
 remotehead=$(git ls-remote "$gitrepo" HEAD|head -1|awk '{print $1}'|cut -c1-6)
 
@@ -21,7 +32,7 @@ fi
 
 if [ "$force" != "1" ];then
   #check whether or not we need to proceed
-  for bin in "${bindir}/"ezquake-reki-*-??????.zip;do
+  for bin in "${bindir}/"ezquake${ezquake_name_append}-*-??????.zip;do
     temprev=$(echo "$bin"|awk -F'[.-]' '{print $(NF-1)}')
     if [ "$temprev" = "$remotehead" ];then
       echo "revision already built, exiting."
@@ -30,7 +41,7 @@ if [ "$force" != "1" ];then
   done
 fi
 
-if [ -d "$gitdir" ];then 
+if [ -d "$gitdir" ];then
   rm -rf "$gitdir"
   sync
 fi
@@ -48,35 +59,30 @@ REVISION=$(git log -n 1|head -1|awk '{print $2}'|cut -c1-6)
 
 rm -f *.exe
 rm -f *.zip
-make clean
-#if [ ! -f .config_windows-clang ];then
-#	echo "$ezquake_config" > .config_windows-clang
-#fi
-sed -i 's/^CFLAGS=/CFLAGS+=/g' .config_windows-clang
-sed -i 's/^LDFLAGS=/LDFLAGS+=/g' .config_windows-clang
+
+sed -i 's/^CFLAGS=/CFLAGS+=/g' $ezquake_config
+sed -i 's/^LDFLAGS=/LDFLAGS+=/g' $ezquake_config
 
 if [ -d output ];then
-        rm -rf output
+	rm -rf output
 fi
 mkdir -p output
-make clean;sync;MODERN_OPENGL_ONLY=1 EZ_CONFIG_FILE=.config_windows-clang nice make -j$(nproc)
+make clean;MODERN_OPENGL_ONLY=1 EZ_CONFIG_FILE=$ezquake_config nice make -j$(nproc)
 mv *.exe output/.
-echo "modern done"
 
-#clean up all files
+#clean up files
 (git clean -qfdx -e output)
 
-make clean;sync;CLASSIC_OPENGL_ONLY=1 EZ_CONFIG_FILE=.config_windows-clang nice make -j$(nproc)
+make clean;CLASSIC_OPENGL_ONLY=1 EZ_CONFIG_FILE=$ezquake_config nice make -j$(nproc)
 mv *.exe output/.
-echo "classic done"
 
 strip output/*
 
-zip -9 -j -r "ezquake-reki-${VERSION}-${REVISION}.zip" output/*.exe
+zip -9 -j -r "ezquake${ezquake_name_append}-${compiler}-${VERSION}-${REVISION}.zip" output/*.exe
 
 if [ $? -eq 0 ];then
   if [ -d  "$bindir" ];then
-    ln -sf *.zip ezquake-reki-latest.zip && cp -Pf --remove-destination *.zip "$bindir/"
+    ln -sf *.zip ezquake${ezquake_name_append}-latest.zip && cp -Pf --remove-destination *.zip "$bindir/"
   else
     echo "$bindir not found, bailing out."
     exit 1
@@ -86,6 +92,6 @@ else
   exit 1
 fi
 
-echo "ezquake-reki binary created successfully and copied to $bindir"
+echo "ezquake${ezquake_name_append} binary created successfully and copied to $bindir"
 rm -rf "$gitdir"
 exit 0

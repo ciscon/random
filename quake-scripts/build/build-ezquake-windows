@@ -16,10 +16,12 @@ unset CC
 export CFLAGS+=" -pipe "
 export LDFLAGS+="$CFLAGS"
 
+gitrepo="https://github.com/ezQuake/ezquake-source.git"
+#append this to binary and work directories for other repos (ie -reki)
+ezquake_name_append=""
 bindir="/mnt/nas-quake/binaries/win/ezquake"
 buildroot="/tmp/build"
-gitdir="${buildroot}/ezquake-source"
-gitrepo="https://github.com/ezQuake/ezquake-source.git"
+gitdir="${buildroot}/ezquake-source${ezquake_name_append}"
 #using purely to check revision
 remotehead=$(git ls-remote "$gitrepo" HEAD|head -1|awk '{print $1}'|cut -c1-6)
 
@@ -30,7 +32,7 @@ fi
 
 if [ "$force" != "1" ];then
   #check whether or not we need to proceed
-  for bin in "${bindir}/"ezquake-*-??????.zip;do
+  for bin in "${bindir}/"ezquake${ezquake_name_append}-*-??????.zip;do
     temprev=$(echo "$bin"|awk -F'[.-]' '{print $(NF-1)}')
     if [ "$temprev" = "$remotehead" ];then
       echo "revision already built, exiting."
@@ -76,11 +78,11 @@ mv *.exe output/.
 
 strip output/*
 
-zip -9 -j -r "ezquake-${compiler}-${VERSION}-${REVISION}.zip" output/*.exe
+zip -9 -j -r "ezquake${ezquake_name_append}-${compiler}-${VERSION}-${REVISION}.zip" output/*.exe
 
 if [ $? -eq 0 ];then
   if [ -d  "$bindir" ];then
-    ln -sf *.zip ezquake-latest.zip && cp -Pf --remove-destination *.zip "$bindir/"
+    ln -sf *.zip ezquake${ezquake_name_append}-latest.zip && cp -Pf --remove-destination *.zip "$bindir/"
   else
     echo "$bindir not found, bailing out."
     exit 1
@@ -90,6 +92,6 @@ else
   exit 1
 fi
 
-echo "ezquake binary created successfully and copied to $bindir"
+echo "ezquake${ezquake_name_append} binary created successfully and copied to $bindir"
 rm -rf "$gitdir"
 exit 0
