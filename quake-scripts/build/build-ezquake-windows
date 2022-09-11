@@ -7,14 +7,17 @@ if [ $(gcc -dumpversion) -ge 12 ];then
 	ezquake_config=".config_windows"
 	compiler=gcc
 	CFLAGS=" -flto=$(nproc) -fwhole-program "
+	LDFLAGS="$CFLAGS"
 else
 	ezquake_config=".config_windows-clang"
 	compiler=clang
+	CFLAGS=" -flto "
+	LDFLAGS=" -flto -fwhole-program -fuse-ld=ldd "
 fi
 
 unset CC
 export CFLAGS+=" -pipe "
-export LDFLAGS="$CFLAGS"
+export LDFLAGS
 
 gitrepo="https://github.com/ezQuake/ezquake-source.git"
 #append this to binary and work directories for other repos (ie -reki)
@@ -26,24 +29,24 @@ gitdir="${buildroot}/ezquake-source${ezquake_name_append}"
 remotehead=$(git ls-remote "$gitrepo" HEAD|head -1|awk '{print $1}'|cut -c1-6)
 
 if [ -z "$remotehead" ];then
-  echo "couldn't retrieve remote head"
-  exit 1
+	echo "couldn't retrieve remote head"
+	exit 1
 fi
 
 if [ "$force" != "1" ];then
-  #check whether or not we need to proceed
-  for bin in "${bindir}/"ezquake${ezquake_name_append}-*-??????.zip;do
-    temprev=$(echo "$bin"|awk -F'[.-]' '{print $(NF-1)}')
-    if [ "$temprev" = "$remotehead" ];then
-      echo "revision already built, exiting."
-      exit 0
-    fi
-  done
+	#check whether or not we need to proceed
+	for bin in "${bindir}/"ezquake${ezquake_name_append}-*-??????.zip;do
+		temprev=$(echo "$bin"|awk -F'[.-]' '{print $(NF-1)}')
+		if [ "$temprev" = "$remotehead" ];then
+			echo "revision already built, exiting."
+			exit 0
+		fi
+	done
 fi
 
 if [ -d "$gitdir" ];then
-  rm -rf "$gitdir"
-  sync
+	rm -rf "$gitdir"
+	sync
 fi
 
 mkdir -p "$buildroot"
@@ -81,15 +84,15 @@ strip output/*
 zip -9 -j -r "ezquake${ezquake_name_append}-${compiler}-${VERSION}-${REVISION}.zip" output/*.exe
 
 if [ $? -eq 0 ];then
-  if [ -d  "$bindir" ];then
-    ln -sf *.zip ezquake${ezquake_name_append}-latest.zip && cp -Pf --remove-destination *.zip "$bindir/"
-  else
-    echo "$bindir not found, bailing out."
-    exit 1
-  fi
+	if [ -d  "$bindir" ];then
+		ln -sf *.zip ezquake${ezquake_name_append}-latest.zip && cp -Pf --remove-destination *.zip "$bindir/"
+	else
+		echo "$bindir not found, bailing out."
+		exit 1
+	fi
 else
-  echo "something failed, bailing out."
-  exit 1
+	echo "something failed, bailing out."
+	exit 1
 fi
 
 echo "ezquake${ezquake_name_append} binary created successfully and copied to $bindir"
