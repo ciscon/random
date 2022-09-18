@@ -6,6 +6,8 @@ optimizations="-march=native -O3 -flto -pipe"
 clangver="15"
 profiledir="/tmp/ezquakeprofile"
 
+sudo apt -y install clang-$clangver llvm-$clangver lld-$clangver
+
 cd "$gitdir"
 
 rm -rf "$profiledir"
@@ -14,11 +16,11 @@ mkdir -p "$profiledir"
 
 echo "CC=clang-$clangver
 CFLAGS=$optimizations -fprofile-instr-generate=$profiledir/default.profraw
-LDFLAGS=$optimizations -fprofile-instr-generate=$profiledir/default.profraw" > "$profiledir/.config_1"
+LDFLAGS=$optimizations -fuse-ld=lld-$clangver -fprofile-instr-generate=$profiledir/default.profraw" > "$profiledir/.config_1"
 
 echo "CC=clang-$clangver
 CFLAGS=$optimizations -fprofile-use=$profiledir/default.profdata
-LDFLAGS=$optimizations -fprofile-use=$profiledir/default.profdata" > "$profiledir/.config_2"
+LDFLAGS=$optimizations -fuse-ld=lld-$clangver -fprofile-use=$profiledir/default.profdata" > "$profiledir/.config_2"
 
 make clean
 EZ_CONFIG_FILE="$profiledir/.config_1" make -j$(nproc)
