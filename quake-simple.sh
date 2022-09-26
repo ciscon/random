@@ -16,7 +16,7 @@ if [ ! -f "/usr/lib/x86_64-linux-gnu/libtcmalloc_minimal.so.4" ];then
     echo "warning libtcmalloc not found"
 else
     unset LD_PRELOAD
-    export LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libtcmalloc_minimal.so.4"
+    export LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libtcmalloc_minimal.so.4 "
 fi
 
 #nvidia
