@@ -36,7 +36,7 @@ enable_notifications="${enable_notifications:-1}"
 sudo_ask="${sudo_ask:-1}"
 
 #optimization parameters
-opengl_multithreading="${opengl_multithreading:-0}" #nvidia/mesa threaded optimizations?
+opengl_multithreading="${opengl_multithreading:-0}" #nvidia/mesa threaded optimizations? (1 performs better for nvidia, 0 for mesa)
 nvidia_prerendered_frames="${nvidia_prerendered_frames:-0}" #as of the 4xx driver series, 0 is application controlled (2).  1 is the lowest latency setting, but will cause a significant fps drop
 nvidia_allow_page_flipping="${nvidia_allow_page_flipping:-0}"
 nvidia_settings_optimizations="${nvidia_settings_optimizations:-1}" #attempt to use nvidia-settings for various optimized settings?
@@ -113,6 +113,18 @@ export __GL_ALLOW_UNOFFICIAL_PROTOCOL=1 #incomplete, must have xorg config optio
 export __GL_MaxFramesAllowed=${nvidia_prerendered_frames} #number of pre-rendered frames
 #generic
 export vblank_mode=0 #no vsync
+
+#mesa
+#disable smart access memory
+export radeonsi_disable_sam=true
+
+#generic
+if [ ! -f "/usr/lib/x86_64-linux-gnu/libtcmalloc_minimal.so.4" ];then
+    echo "warning libtcmalloc not found"
+else
+    unset LD_PRELOAD
+    export LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libtcmalloc_minimal.so.4 "
+fi
 
 
 if [ ! -z "$sudo_command" ];then
