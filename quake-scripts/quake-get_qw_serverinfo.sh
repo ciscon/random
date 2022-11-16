@@ -3,6 +3,8 @@
 
 delimiter="\t"
 
+quakestatoptions=""
+
 #if using mmdblookup, location of db
 mmdblocation="/var/lib/GeoIP/GeoLite2-Country.mmdb"
 
@@ -30,16 +32,17 @@ else
 	lookuptext=
 fi
 
-quakestat  -R -json -u -qwm master.quakeservers.net > $tempdir/quakeservers.1&
-quakestat  -R -json -u -qwm qwmaster.fodquake.net > $tempdir/quakeservers.2&
+quakestat $quakestatoptions -R -json -u -qwm master.quakeservers.net > $tempdir/quakeservers.1&
+quakestat $quakestatoptions -R -json -u -qwm qwmaster.fodquake.net > $tempdir/quakeservers.2&
+quakestat $quakestatoptions -R -json -u -qwm master.quakeworld.nu > $tempdir/quakeservers.3&
 wait
 
-jq -r 'to_entries[].value|[.hostname, .name, .rules."*version"]|@tsv' $tempdir/quakeservers.[0-9]|sort -u > $tempdir/quakeservers.csv
+jq -r 'to_entries[].value|[.hostname, .name, .rules."*version", .rules."*admin", .gametype]|@tsv' $tempdir/quakeservers.[0-9]|sort -u > $tempdir/quakeservers.csv
 
 #header
-echo -e "${lookuptext}host${delimiter}server${delimiter}port${delimiter}version"
+echo -e "${lookuptext}host${delimiter}server${delimiter}port${delimiter}version${delimiter}admin${delimiter}gametype"
 
-while IFS=$'\t' read hostname name version;do
+while IFS=$'\t' read hostname name version admin gametype;do
 	if [ -z "$hostname" ] || [ -z "$version" ];then
 		continue
 	fi
@@ -62,7 +65,7 @@ while IFS=$'\t' read hostname name version;do
 			fi
 			locationoutput+=$delimiter
 		fi
-		echo -e "${locationoutput}${name}${delimiter}${server}${delimiter}${port}${delimiter}${version}"
+		echo -e "${locationoutput}${name}${delimiter}${server}${delimiter}${port}${delimiter}${version}${delimiter}$admin${delimiter}$gametype"
 		server=""
 		port=""
 	fi
