@@ -4,15 +4,15 @@
 set -e
 
 if [ $(gcc -dumpversion) -ge 12 ];then
-		ezquake_config=".config_windows"
-		compiler=gcc
-		CFLAGS=" -flto=$(nproc) -fwhole-program -O2 -fomit-frame-pointer -msse2 -mfpmath=sse -Imingw32-libs/include -D_DEBUG "
-		LDFLAGS=" $CFLAGS -Wl,--large-address-aware "
+	ezquake_config=".config_windows"
+	compiler=gcc
+	CFLAGS=" -flto=$(nproc) -fwhole-program -O2 -fomit-frame-pointer -msse2 -mfpmath=sse -Imingw32-libs/include -D_DEBUG "
+	LDFLAGS=" $CFLAGS -Wl,--large-address-aware "
 else 
-		ezquake_config=".config_windows-clang"
-		compiler=clang
-		CFLAGS=" -flto -O2 -fomit-frame-pointer -msse2 -mfpmath=sse -Imingw32-libs/include -D_DEBUG "
-		LDFLAGS=" -flto -fwhole-program -fuse-ld=ldd -Wl,--large-address-aware "
+	ezquake_config=".config_windows-clang"
+	compiler=clang
+	CFLAGS=" -flto -O2 -fomit-frame-pointer -msse2 -mfpmath=sse -Imingw32-libs/include -D_DEBUG "
+	LDFLAGS=" -flto -fwhole-program -fuse-ld=ldd -Wl,--large-address-aware "
 fi
 
 unset CC
@@ -29,24 +29,24 @@ gitdir="${buildroot}/ezquake-source${ezquake_name_append}"
 remotehead=$(git ls-remote "$gitrepo" HEAD|head -1|awk '{print $1}'|cut -c1-6)
 
 if [ -z "$remotehead" ];then
-		echo "couldn't retrieve remote head"
-		exit 1
+	echo "couldn't retrieve remote head"
+	exit 1
 fi
 
 if [ "$force" != "1" ];then
-		#check whether or not we need to proceed
-		for bin in "${bindir}/"ezquake${ezquake_name_append}-*-??????.zip;do
-				temprev=$(echo "$bin"|awk -F'[.-]' '{print $(NF-1)}')
-				if [ "$temprev" = "$remotehead" ];then
-						echo "revision already built, exiting."
-						exit 0
-				fi
-		done
+	#check whether or not we need to proceed
+	for bin in "${bindir}/"ezquake${ezquake_name_append}-*-??????.zip;do
+		temprev=$(echo "$bin"|awk -F'[.-]' '{print $(NF-1)}')
+		if [ "$temprev" = "$remotehead" ];then
+			echo "revision already built, exiting."
+			exit 0
+		fi
+	done
 fi
 
 if [ -d "$gitdir" ];then
-		rm -rf "$gitdir"
-		sync
+	rm -rf "$gitdir"
+	sync
 fi
 
 mkdir -p "$buildroot"
@@ -67,7 +67,7 @@ sed -i 's/^CFLAGS=/CFLAGS?=/g' $ezquake_config
 sed -i 's/^LDFLAGS=/LDFLAGS?=/g' $ezquake_config
 
 if [ -d output ];then
-		rm -rf output
+	rm -rf output
 fi
 mkdir -p output
 make clean;MODERN_OPENGL_ONLY=1 EZ_CONFIG_FILE=$ezquake_config nice make -j$(nproc)
@@ -84,15 +84,15 @@ strip output/*
 zip -9 -j -r "ezquake${ezquake_name_append}-${compiler}-${VERSION}-${REVISION}.zip" output/*.exe
 
 if [ $? -eq 0 ];then
-		if [ -d  "$bindir" ];then
-				ln -sf *.zip ezquake${ezquake_name_append}-latest.zip && cp -Pf --remove-destination *.zip "$bindir/"
-		else
-				echo "$bindir not found, bailing out."
-				exit 1
-		fi
-else
-		echo "something failed, bailing out."
+	if [ -d  "$bindir" ];then
+		ln -sf *.zip ezquake${ezquake_name_append}-latest.zip && cp -Pf --remove-destination *.zip "$bindir/"
+	else
+		echo "$bindir not found, bailing out."
 		exit 1
+	fi
+else
+	echo "something failed, bailing out."
+	exit 1
 fi
 
 echo "ezquake${ezquake_name_append} binary created successfully and copied to $bindir"
