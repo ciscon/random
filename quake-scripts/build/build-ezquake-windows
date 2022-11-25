@@ -63,8 +63,8 @@ REVISION=$(git log -n 1|head -1|awk '{print $2}'|cut -c1-6)
 rm -f *.exe
 rm -f *.zip
 
-sed -i 's/^CFLAGS=/CFLAGS:=/g' $ezquake_config
-sed -i 's/^LDFLAGS=/LDFLAGS:=/g' $ezquake_config
+sed -i 's/^CFLAGS=/CFLAGS?=/g' $ezquake_config
+sed -i 's/^LDFLAGS=/LDFLAGS?=/g' $ezquake_config
 
 if [ -d output ];then
 		rm -rf output
