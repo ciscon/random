@@ -31,7 +31,7 @@ for file in $(find . -type f);do
 		output="./x265-output/${dir}/${base}${postpend}.mkv"
 		if [ -e "$output" ];then
 			echo "checking integrity of found output file: $output ..."
-			outputcheck=$(ffmpeg -v error -i "$output" -c copy -f null - 2>&1|wc -l)
+			outputcheck=$(ffmpeg -v error -i "$output" -c copy -f null - 2>&1|grep --color=never -v 'non monotonically increasing'|wc -l)
 			if [ $outputcheck -eq 0 ];then
 				echo "no errors found in file, checking times."
 				resulttime=$(ffprobe -i "$output" -show_entries format=duration -v quiet -of csv="p=0"| cut -f1 -d".")
