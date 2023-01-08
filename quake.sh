@@ -119,13 +119,12 @@ export vblank_mode=0 #no vsync
 export radeonsi_disable_sam=true
 
 #generic
-if [ ! -f "/usr/lib/x86_64-linux-gnu/libtcmalloc_minimal.so.4" ];then
-    echo "warning libtcmalloc not found"
+preload_library="libtcmalloc_minimal.so.4"
+if ldconfig -p |grep --color=never $preload_library -c >/dev/null 2>&1;then
+	export LD_PRELOAD="$preload_library"
 else
-    unset LD_PRELOAD
-    export LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libtcmalloc_minimal.so.4 "
+	echo "warning $preload_library not found"
 fi
-
 
 if [ ! -z "$sudo_command" ];then
 
