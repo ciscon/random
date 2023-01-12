@@ -54,6 +54,7 @@ git clone "$gitrepo" "$gitdir" || exit 1
 cd "$gitdir"
 git checkout master > /dev/null 2>&1
 git reset --hard origin/master >/dev/null 2>&1
+git submodule update --init --recursive --remote >/dev/null 2>&1
 git clean -qfdx >/dev/null 2>&1
 git pull >/dev/null 2>&1
 #just in case it's changed since remote pull

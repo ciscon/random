@@ -53,6 +53,7 @@ git fetch --all >/dev/null 2>&1
 git clean -qfdx >/dev/null 2>&1
 git reset --hard >/dev/null 2>&1
 git checkout $gitbranch >/dev/null 2>&1
+git submodule update --init --recursive --remote >/dev/null 2>&1
 git reset --hard origin/$gitbranch >/dev/null 2>&1
 git clean -qfdx >/dev/null 2>&1
 git config pull.rebase false >/dev/null 2>&1
