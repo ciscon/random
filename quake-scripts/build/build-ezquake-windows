@@ -58,7 +58,7 @@ git submodule update --init --recursive --remote >/dev/null 2>&1
 git clean -qfdx >/dev/null 2>&1
 git pull >/dev/null 2>&1
 #just in case it's changed since remote pull
-VERSION=$(sed -n 's/.*VERSION_NUMBER.*"\(.*\)".*/\1/p' version.h)
+VERSION=$(sed -n 's/.*VERSION_NUMBER.*"\(.*\)".*/\1/p' src/version.h)
 REVISION=$(git log -n 1|head -1|awk '{print $2}'|cut -c1-6)
 
 rm -f *.exe
