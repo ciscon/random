@@ -6,13 +6,13 @@ set -e
 if [ $(gcc -dumpversion) -ge 12 ];then
 	ezquake_config=".config_windows"
 	compiler=gcc
-	CFLAGS=" -flto=$(nproc) -fwhole-program -O2 -fomit-frame-pointer -msse2 -mfpmath=sse -Imingw32-libs/include -D_DEBUG "
-	LDFLAGS=" $CFLAGS -Lmingw32-libs/lib -static -Wl,--large-address-aware "
+	CFLAGS=" -flto=$(nproc) -fwhole-program -O2 -fomit-frame-pointer -msse2 -mfpmath=sse -Isrc/mingw32-libs/include -D_DEBUG "
+	LDFLAGS=" $CFLAGS -Lsrc/mingw32-libs/lib -static -Wl,--large-address-aware "
 else
 	ezquake_config=".config_windows-clang"
 	compiler=clang
-	CFLAGS=" -flto -O2 -fomit-frame-pointer -msse2 -mfpmath=sse -Imingw32-libs/include -D_DEBUG "
-	LDFLAGS="  -Lmingw32-libs/lib -static -flto -fwhole-program -fuse-ld=ldd -Wl,--large-address-aware "
+	CFLAGS=" -flto -O2 -fomit-frame-pointer -msse2 -mfpmath=sse -Isrc/mingw32-libs/include -D_DEBUG "
+	LDFLAGS="  -Lsrc/mingw32-libs/lib -static -flto -fwhole-program -fuse-ld=ldd -Wl,--large-address-aware "
 fi
 
 unset CC
