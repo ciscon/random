@@ -28,6 +28,7 @@ if [ -e /sys/module/nvidia/version ] 2>/dev/null || [ "$mesa_glthread" = "true" 
 	if [ $(/sbin/ldconfig -Np|grep libGL.so.1$ -c) -gt 0 ];then
 		LD_PRELOAD+="libGL.so.1 "
 	fi
+	export __GL_THREADED_OPTIMIZATIONS=1
 fi
 
 oldpath=$(pwd)
