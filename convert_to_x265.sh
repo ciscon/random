@@ -2,10 +2,10 @@
 #recursively convert videos to x265
 
 postpend="-ciscon-x265"
-preset="slow"
+preset="veryslow"
 crf=18
 
-let procs=$(nproc)/2-2
+let procs=$(nproc)-$(nproc)/2
 
 deps="ffmpeg find file nice"
 for dep in $deps;do
