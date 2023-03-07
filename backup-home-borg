@@ -9,6 +9,7 @@ mkdir -p $HOME/backup
 
 #backup etc
 sudo rsync -a --delete /etc $HOME/backup
+crontab -l > $HOME/backup/user.crontab
 sudo chmod g+rX $HOME/backup -R
 
 #create package list
