@@ -1,0 +1,31 @@
+#!/bin/bash
+
+export BORG_UNKNOWN_UNENCRYPTED_REPO_ACCESS_IS_OK=yes
+export BORG_RELOCATED_REPO_ACCESS_IS_OK=yes
+export BORG_PASSPHRASE=""
+export BORG_KEY_FILE=""
+
+mkdir -p $HOME/backup
+
+#backup etc
+sudo rsync -a --delete /etc $HOME/backup
+sudo chmod g+rX $HOME/backup -R
+
+#create package list
+dpkg-query -f '${binary:Package}\n' -W > $HOME/package.list
+#restore: sudo xargs -a $HOME/package.list apt install
+
+borg init --encryption=authenticated-blake2 /mnt/nas-backup/herpes10
+
+mountpoint -q /mnt/nas-backup && \
+nice ionice -n2 borg create -C zstd -v --stats /mnt/nas-backup/herpes10::home-$(date +%Y-%m-%d-%H) /home \
+--exclude '*/.phoronix-test-suite' \
+--exclude '*/Downloads' \
+--exclude '*/workdir' \
+--exclude '*/.steam/debian-installation' \
+--exclude '*/.local/share/Steam/steamapps' \
+--exclude '*/.gvfs' \
+--exclude '*/.cache'
+
+#nice ionice -n2 borg create -C zstd,9 -v --stats /mnt/nas-backup/herpes10::home-$(date +%Y-%m-%d-%H) /home --exclude '~/.local/share/Steam/steamapps'
+nice ionice -n2 borg prune --save-space --stats -v --keep-within 2w /mnt/nas-backup/herpes10
