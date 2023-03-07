@@ -1,0 +1,41 @@
+#!/bin/bash
+
+backup="/mnt/nas-backup/herpes10-tar"
+
+deps="pigz tar nice ionice sudo"
+for dep in $deps;do
+	if ! hash $dep >/dev/null 2>&1;then
+		echo "missing dep $dep, bailing out."
+		exit 1
+	fi
+done 
+
+if mountpoint -q /mnt/nas-backup;then
+	cd /
+	mkdir -p "$backup"
+	nice -n20 ionice -n2 sudo tar cpf - \
+		--warning='no-file-ignored' \
+		--one-file-system \
+		--exclude=/proc \
+		--exclude=/tmp \
+		--exclude=/mnt \
+		--exclude=/dev \
+		--exclude=/sys \
+		--exclude=/run \
+		--exclude=/media \
+		--exclude=/var/log \
+		--exclude=/var/cache/apt/archives \
+		--exclude=/usr/src/linux-headers* \
+		--exclude=/home/*/.gvfs \
+		--exclude=/home/*/.cache \
+		/	| nice -n20 ionice -n2 pigz -1 > "$backup/rootfs.tar.gz" && \
+		nice -n20 ionice -n2 sudo tar cpf - \
+		--warning='no-file-ignored' \
+		--one-file-system \
+		--exclude=/home/*/.steam/debian-installation \
+		--exclude=/home/*/.gvfs \
+		--exclude=/home/*/.cache \
+		/home	| nice -n 20 ionice -n2 pigz -1 > "$backup/home.tar.gz"
+fi
+
+echo "complete."
