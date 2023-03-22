@@ -23,8 +23,8 @@ mkdir -p "$buildroot"
 
 if [ "$force" != "1" ];then
 	#check whether or not we need to proceed
-	for bin in "${bindir}/"ezquake-*-??????.AppImage;do
-		temprev=$(echo "$bin"|awk -F'[.-]' '{print $(NF-1)}')
+	for bin in "${bindir}/"ezquake-*.AppImage;do
+		temprev=$(echo "$bin"|awk -F'[.-]' '{print $(NF-2)}')
 		if [ "$temprev" = "$remotehead" ];then
 			echo "revision already built, exiting."
 			exit 0
