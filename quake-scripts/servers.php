@@ -9,7 +9,7 @@ $delimiter=",";
 $csv=fopen('servers.txt','r');
 while ($row = fgetcsv($csv,null,$delimiter)) $servers[]=$row;
 
-$filters=$_REQUEST['filter']?explode(",",$_REQUEST['filter']):null;
+$filters=isset($_REQUEST['filter'])?explode(",",$_REQUEST['filter']):null;
 
 if (is_countable($filters) && count($filters) > 0){
 	foreach ($servers as $keyserver=>$server) {
