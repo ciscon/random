@@ -37,12 +37,13 @@ quakestat $quakestatoptions -R -json -u -qwm qwmaster.fodquake.net > $tempdir/qu
 quakestat $quakestatoptions -R -json -u -qwm master.quakeworld.nu > $tempdir/quakeservers.3&
 wait
 
-jq -r 'to_entries[].value|[.hostname, .name, .rules."*version", .rules."*admin", .gametype]|@csv' $tempdir/quakeservers.[0-9]|sort -u > $tempdir/quakeservers.csv
+jq -r 'to_entries[].value|[.address, .name, .rules."*version", .rules."*admin", .gametype]|@csv' $tempdir/quakeservers.[0-9]|sort -u > $tempdir/quakeservers.csv
 
 #header
-echo -e "${lookuptext}host${delimiter}server${delimiter}port${delimiter}version${delimiter}admin${delimiter}gametype"
+echo -e "${lookuptext}hostandport${delimiter}servername${delimiter}version${delimiter}admin${delimiter}gametype${delimiter}host${delimiter}port"
 
-while IFS="$delimiter" read -r hostname name version admin gametype;do
+while IFS= read -r line;do
+echo "$line"|while IFS="$delimiter" read -r hostname name version;do
 	if [ -z "$hostname" ] || [ -z "$version" ];then
 		continue
 	fi
@@ -65,8 +66,9 @@ while IFS="$delimiter" read -r hostname name version admin gametype;do
 			fi
 			locationoutput+=$delimiter
 		fi
-		echo -e "${locationoutput}${name}${delimiter}${server}${delimiter}${port}${delimiter}${version}${delimiter}${admin}${delimiter}${gametype}"
+		echo -e "${locationoutput}${line}${delimiter}${server}${delimiter}${port}"
 		server=""
 		port=""
 	fi
+done
 done < $tempdir/quakeservers.csv

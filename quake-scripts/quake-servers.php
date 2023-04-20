@@ -1,10 +1,10 @@
 <?php
 /*
-apache htaccess rules:
-RewriteCond %{REQUEST_URI} !quake-servers.php.*
-RewriteRule ^servers-antilag.*([^?]*)$ /quake-servers.php?$1&antilag=1 [L,QSA]
-RewriteRule ^servers.*([^?]*)$ /quake-servers.php?$1 [L,QSA]
-*/
+   apache htaccess rules:
+   RewriteCond %{REQUEST_URI} !quake-servers.php.*
+   RewriteRule ^servers-antilag.*([^?]*)$ /quake-servers.php?$1&antilag=1 [L,QSA]
+   RewriteRule ^servers.*([^?]*)$ /quake-servers.php?$1 [L,QSA]
+ */
 
 header('Content-type: text/plain; charset=utf-8');
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
@@ -14,7 +14,9 @@ header("Pragma: no-cache");
 $filters=isset($_REQUEST['filter'])?explode(",",$_REQUEST['filter']):null;
 $antilag=isset($_REQUEST['antilag'])?true:false;
 
-$delimiter=",";
+$indelimiter=",";
+$outdelimiter=",";
+
 if ($antilag) {
 	$file='servers-antilag.txt';
 } else {
@@ -23,10 +25,9 @@ if ($antilag) {
 
 if (!file_exists($file)) exit(1);
 $csv=fopen($file,'r');
-$header = fgetcsv($csv,null,$delimiter);
+$header = fgetcsv($csv,null,$indelimiter);
 
-while ($row = fgetcsv($csv,null,$delimiter)) $servers[]=$row;
-
+while ($row = fgetcsv($csv,null,$indelimiter)) $servers[]=$row;
 
 if (is_countable($filters) && count($filters) > 0){
 	foreach ($servers as $keyserver=>$server) {
@@ -47,9 +48,9 @@ if (is_countable($filters) && count($filters) > 0){
 	}
 }
 sort($servers);
-echo implode(",",$header)."\n";
+echo implode("$outdelimiter",$header)."\n";
 foreach ($servers as $row){
-	if($row) echo implode(",",$row)."\n";
+	if($row) echo '"'.implode('"'.$outdelimiter.'"',$row)."\"\n";
 }
 
 ?>
