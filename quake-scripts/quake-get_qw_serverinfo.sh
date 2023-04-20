@@ -1,7 +1,7 @@
 #!/bin/bash
 # poll individual quake servers and get admin information, output in csv format
 
-delimiter="\t"
+delimiter=","
 
 quakestatoptions=""
 
@@ -37,18 +37,18 @@ quakestat $quakestatoptions -R -json -u -qwm qwmaster.fodquake.net > $tempdir/qu
 quakestat $quakestatoptions -R -json -u -qwm master.quakeworld.nu > $tempdir/quakeservers.3&
 wait
 
-jq -r 'to_entries[].value|[.hostname, .name, .rules."*version", .rules."*admin", .gametype]|@tsv' $tempdir/quakeservers.[0-9]|sort -u > $tempdir/quakeservers.csv
+jq -r 'to_entries[].value|[.hostname, .name, .rules."*version", .rules."*admin", .gametype]|@csv' $tempdir/quakeservers.[0-9]|sort -u > $tempdir/quakeservers.csv
 
 #header
 echo -e "${lookuptext}host${delimiter}server${delimiter}port${delimiter}version${delimiter}admin${delimiter}gametype"
 
-while IFS=$'\t' read hostname name version admin gametype;do
+while IFS="$delimiter" read -r hostname name version admin gametype;do
 	if [ -z "$hostname" ] || [ -z "$version" ];then
 		continue
 	fi
 
-	server=$(echo "$hostname"|awk -F':' '{print $1}')
-	port=$(echo "$hostname"|awk -F':' '{print $2}')
+	server=$(echo "$hostname"|awk -F':' '{print $1}'|tr -d '"')
+	port=$(echo "$hostname"|awk -F':' '{print $2}'|tr -d '"')
 
 	if [ ! -z "$server" ] && [ ! -z "$port" ];then
 		locationoutput=
@@ -65,7 +65,7 @@ while IFS=$'\t' read hostname name version admin gametype;do
 			fi
 			locationoutput+=$delimiter
 		fi
-		echo -e "${locationoutput}${name}${delimiter}${server}${delimiter}${port}${delimiter}${version}${delimiter}$admin${delimiter}$gametype"
+		echo -e "${locationoutput}${name}${delimiter}${server}${delimiter}${port}${delimiter}${version}${delimiter}${admin}${delimiter}${gametype}"
 		server=""
 		port=""
 	fi
