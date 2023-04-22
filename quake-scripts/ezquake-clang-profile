@@ -12,7 +12,7 @@ if [ ! -e "$quakedir/id1/pak0.pak" ];then
 	exit 1
 fi
 
-sudo apt -y install clang-$clangver llvm-$clangver lld-$clangver
+sudo apt -y install clang-$clangver llvm-$clangver lld-$clangver libclang-rt-$clangver-dev
 
 cd "$gitdir"
 
