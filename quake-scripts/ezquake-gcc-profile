@@ -1,0 +1,40 @@
+#!/bin/bash -e
+
+quaketestcommand="+timedemo demos/fps4"
+quakedir="$HOME/games/quake"
+gitdir="/home/git/ezquake-source-official"
+optimizations="-march=native -O3 -pipe"
+gccver="12"
+profiledir="/tmp/ezquakeprofile"
+
+if [ ! -e "$quakedir/id1/pak0.pak" ];then
+	echo "pak files not found in quakedir.  bailing out."
+	exit 1
+fi
+
+sudo apt -y install gcc-$gccver
+
+cd "$gitdir"
+
+rm -rf "$profiledir"
+mkdir -p "$profiledir"
+
+
+echo "CC=gcc-$gccver
+CFLAGS=$optimizations -flto=$(nproc) -flto-partition=balanced -fprofile-dir=$profiledir -fprofile-generate=$profiledir/default.profdata
+LDFLAGS=$optimizations -flto=$(nproc) -flto-partition=balanced  -fprofile-dir=$profiledir -fprofile-generate=$profiledir/default.profdata
+" > "$profiledir/.config_1"
+
+echo "CC=gcc-$gccver
+CFLAGS=$optimizations -flto=$(nproc) -flto-partition=balanced -fprofile-dir=$profiledir -fprofile-use=$profiledir/default.profdata -fprofile-correction
+LDFLAGS=$optimizations -flto=$(nproc) -flto-partition=balanced -fprofile-dir=$profiledir -fprofile-use=$profiledir/default.profdata -fprofile-correction
+" > "$profiledir/.config_2"
+
+make clean
+EZ_CONFIG_FILE="$profiledir/.config_1" make -j$(nproc)
+
+./ezquake-linux-$(uname -m) -basedir $quakedir $quaketestcommand
+
+make clean
+
+EZ_CONFIG_FILE="$profiledir/.config_2" make -j$(nproc)
