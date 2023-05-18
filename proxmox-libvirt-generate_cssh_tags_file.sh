@@ -15,10 +15,10 @@ if [ -f "$HOME/.clusterssh/tags" ];then
 	sed -i "/$header/Q" "$HOME/.clusterssh/tags"
 fi
 
-vms_by_host=$(grep --color=never -v NOTFOUND "$input"|awk '{print $3,$1"-vms"}')
-vms_debian_ubuntu=$(grep --color=never -v NOTFOUND "$input"|grep --color=never -e ubuntu -e debian|awk '{print $3,"debian"}')
-vms_fedora=$(grep --color=never -v NOTFOUND "$input"|grep --color=never -e fedora -e centos -e rhel -e redhat|awk '{print $3,"fedora"}')
-vms_windows=$(grep --color=never -v NOTFOUND "$input"|grep --color=never windows|awk '{print $3,"windows"}')
+vms_by_host=$(grep --color=never -v NOTFOUND "$input"|awk '{print $3,$1"-vms"}'|sort -u)
+vms_debian_ubuntu=$(grep --color=never -v NOTFOUND "$input"|grep --color=never -e ubuntu -e debian|awk '{print $3,"debian"}'|sort -u)
+vms_fedora=$(grep --color=never -v NOTFOUND "$input"|grep --color=never -e fedora -e centos -e rhel -e redhat|awk '{print $3,"fedora"}'|sort -u)
+vms_windows=$(grep --color=never -v NOTFOUND "$input"|grep --color=never windows|awk '{print $3,"windows"}'|sort -u)
 
 echo "$header" >> "$HOME/.clusterssh/tags"
 echo -en "#vms by host\n$vms_by_host\n\n" >> "$HOME/.clusterssh/tags"
