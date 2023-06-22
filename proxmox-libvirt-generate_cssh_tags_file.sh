@@ -19,11 +19,13 @@ vms_by_host=$(grep --color=never -v NOTFOUND "$input"|awk '{print $3,$1"-vms"}'|
 vms_debian_ubuntu=$(grep --color=never -v NOTFOUND "$input"|grep --color=never -e ubuntu -e debian|awk '{print $3,"debian"}'|sort -u)
 vms_fedora=$(grep --color=never -v NOTFOUND "$input"|grep --color=never -e fedora -e centos -e rhel -e redhat|awk '{print $3,"fedora"}'|sort -u)
 vms_windows=$(grep --color=never -v NOTFOUND "$input"|grep --color=never windows|awk '{print $3,"windows"}'|sort -u)
+vms_uservms=$(grep --color=never -v NOTFOUND "$input"|grep --color=never -e ubuntu -e debian|grep --color=never '\-vm[0-9]\+'|awk '{print $3,"uservms"}'|sort -u)
 
 echo "$header" >> "$HOME/.clusterssh/tags"
 echo -en "#vms by host\n$vms_by_host\n\n" >> "$HOME/.clusterssh/tags"
 echo -en "#debian linux\n$vms_debian_ubuntu\n\n" >> "$HOME/.clusterssh/tags"
 echo -en "#fedora linux\n$vms_fedora\n\n" >> "$HOME/.clusterssh/tags"
 echo -en "#windows\n$vms_windows\n\n" >> "$HOME/.clusterssh/tags"
+echo -en "#user vms\n$vms_uservms\n\n" >> "$HOME/.clusterssh/tags"
 
 echo "wrote to $HOME/.clusterssh/tags file"
