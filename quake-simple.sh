@@ -9,7 +9,7 @@ sudo -n renice -n -5 $$ || echo "warning couldn't set priority, need passwordles
 #disable mesa's gl threading
 export mesa_glthread=false
 #disable smart access memory
-export radeonsi_disable_sam=true
+#export radeonsi_disable_sam=true
 
 #generic
 preload_library="libtcmalloc_minimal.so.4"
