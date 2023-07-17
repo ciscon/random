@@ -22,10 +22,6 @@ for file in $(find . -type f);do
 	dir=$(dirname "$file")
 	origfile=$(basename "$file")
 	if [[ $(file --mime-type -b "$file") =~ ^video ]];then
-		if [[ "$file" == *"x265"* ]];then
-			echo "already x265, continuing"
-			continue
-		fi
 		if [[ $origfile =~ $postpend ]];then
 			echo "converted file $file as input, continuing"
 			continue
@@ -33,6 +29,11 @@ for file in $(find . -type f);do
 		mkdir -p "./x265-output/${dir}"
 		base=${origfile%.*}
 		output="./x265-output/${dir}/${base}${postpend}.mkv"
+		if [[ "$file" == *"x265"* ]];then
+			echo "already x265, copying and continuing"
+			cp -f "$file" "$output"
+			continue
+		fi
 		if [ -e "$output" ];then
 			echo "checking integrity of found output file: $output ..."
 			outputcheck=$(ffmpeg -v error -i "$output" -c copy -f null - 2>&1|grep --color=never -v 'non monotonically increasing'|wc -l)
