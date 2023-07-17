@@ -22,6 +22,10 @@ for file in $(find . -type f);do
 	dir=$(dirname "$file")
 	origfile=$(basename "$file")
 	if [[ $(file --mime-type -b "$file") =~ ^video ]];then
+		if [[ "$file" == *"x265"* ]];then
+			echo "already x265, continuing"
+			continue
+		fi
 		if [[ $origfile =~ $postpend ]];then
 			echo "converted file $file as input, continuing"
 			continue
