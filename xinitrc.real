@@ -1,0 +1,82 @@
+#!/bin/bash
+echo up |sudo -n tee -a /dev/kmsg
+
+#themes
+export GTK_THEME="Adwaita:dark"
+export QT_STYLE_OVERRIDE="Adwaita-Dark"
+export QT_QPA_PLATFORMTHEME="gnome"
+
+export WINEPREFIX=~/.wine-games
+
+if [ -z "$XDG_RUNTIME_DIR" ];then
+  export XDG_RUNTIME_DIR="/tmp/$(id -u)"
+  mkdir -p "$XDG_RUNTIME_DIR"
+fi
+[ -z "$DBUS_SESSION_BUS_ADDRESS" ] && eval $(/usr/bin/dbus-launch --exit-with-session --sh-syntax)
+
+
+for device in $(xrandr |awk '{print $1}'|grep --color=never -v '^Screen'|grep --color=never -v '^[0-9]');do xrandr --output "$device" --set TearFree off >/dev/null 2>&1;done&
+
+dbus-cleanup-sockets
+dbus-update-activation-environment --all
+export NO_AT_BRIDGE=1
+
+
+#amdgpu
+$HOME/bin/amdclocks&
+
+#sudo nice /usr/local/bin/amdgpu-fan&
+
+#razer
+source $HOME/bin/razer-functions.sh
+razer-mode 1
+razer-dpi 3800
+razer-rate 8000
+
+#if hash compton >/dev/null 2>&1;then
+#	compton --unredir-if-possible -b
+#else
+#	picom --vsync --unredir-if-possible -b
+#fi
+
+
+nice -n -5 pipewire&
+
+#set -a
+#pkill -9 ssh-agent
+#eval `ssh-agent` && ssh-add
+#set +a
+
+xhost +si:localuser:root&
+xhost +si:localuser:ciscon&
+
+xrdb -load ~/.Xresources&
+
+#xset dpms 0 0 0&
+xset s off -dpms&
+
+#export background="/home/ciscon/pictures/davrosbg.png"
+#feh --bg-fill "${background}"&
+
+xsetroot -cursor_name left_ptr&
+
+wmname LG3D
+export _JAVA_AWT_WM_NONREPARENTING=1
+
+#nice -n 5 slstatus&
+nice -n 10 pasystray&
+nice -n 10 diodon&
+nice -n 10 discord&
+#nice -n 20 dunst&
+#nice -n 5 hexchat&
+nice -n 20 nagstamon&
+nice -n 20 youtube-music&
+nice -n 20 flameshot&
+#nice -n 5 deadbeef&
+(sleep 1
+nice -n 10 easyeffects --gapplication-service&
+)&
+
+
+exec awesome --no-argb
+#exec $HOME/bin/dwm 
