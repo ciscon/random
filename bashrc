@@ -44,6 +44,8 @@ set -P
 set -o vi
 set -o physical
 
+shopt -s checkwinsize
+
 bind -m vi-insert "\C-l":clear-screen
 
 alias sync_to_dalek="rsync $HOME/ss/* dalek:/SitscapeData/SOURCE/. -a"
@@ -88,27 +90,6 @@ function rsyncport() {
 	echo $port
 	echo "$otherargs"
 }
-
-dev=0
-timeout 1 test -d /mnt/build/sitscape_chroot&&dev=1
-if [ $dev -eq 1 ];then
-	. /mnt/build/sitscape_chroot/conf/yum/yumreleaseversion.ini
-	if ! which dnf 2>/dev/null 1>&2;then
-		alias dnf="yum"
-	fi
-	if [ -d /SitscapeData/PROD/sitscape_chroot ];then
-		chroot_dir="/SitscapeData/PROD/sitscape_chroot"
-	else
-		chroot_dir="/mnt/build/sitscape_chroot/target"
-	fi
-
-	alias yum_chroot="dnf --color=never -c /mnt/build/sitscape_chroot/conf/yum/yum.conf -y --installroot=${chroot_dir} --releasever=$releasever"
-	alias dnf_chroot=yum_chroot
-else
-	alias yum_chroot='sudo yum -c /home/git/dev_build2/sitscape_chroot/conf/yum/yum.conf --installroot=/home/git/dev_build2/sitscape_chroot/target --nogpgcheck --releasever=25'
-fi
-
-shopt -s checkwinsize
 
 alias alsa_output_info="cat /proc/asound/card*/*/*/hw_params"
 alias aptget-distupgrade="apt-get -y --force-yes -o Dpkg::Options::=\"--force-confdef\" -o Dpkg::Options::=\"--force-confold\" dist-upgrade"
