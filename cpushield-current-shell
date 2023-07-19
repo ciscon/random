@@ -1,0 +1,7 @@
+CPUS="1,13"
+cset shield -s -v
+sudo cset shield --cpu $CPUS
+sudo cset shield --cpu $CPUS
+sudo cset shield --shield --pid $$
+bash
+trap "sudo cset shield --reset" SIGINT EXIT
