@@ -1,0 +1,11 @@
+/home/git/random/proxmox-get_vm_mac_ip.sh > /var/tmp/hosts && /home/git/random/proxmox-libvirt-generate_cssh_tags_file.sh /var/tmp/hosts
+dup_mac=$(cat /var/tmp/hosts|awk '{print $4}'|sort|uniq -c|sort -n|grep '^\s*[2-9]\+\s')
+dup_ip=$(cat /var/tmp/hosts|awk '{print $3}'|sort|uniq -c|sort -n|grep '^\s*[2-9]\+\s')
+if [ ! -z "$dup_mac" ];then
+  echo "duplicate macs found!!!"
+  echo "$dup_mac"
+fi
+if [ ! -z "$dup_ip" ];then
+  echo "duplicate macs found!!!"
+  echo "$dup_ip"
+fi
