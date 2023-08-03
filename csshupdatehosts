@@ -6,6 +6,6 @@ if [ ! -z "$dup_mac" ];then
   echo "$dup_mac"
 fi
 if [ ! -z "$dup_ip" ];then
-  echo "duplicate macs found!!!"
+  echo "duplicate ips found!!!"
   echo "$dup_ip"
 fi

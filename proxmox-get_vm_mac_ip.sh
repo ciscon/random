@@ -33,15 +33,19 @@ for i in $hosts;do
 			for line in $vms;do
 				id=$(echo "$line"|awk '{print $1}')
 				name=$(echo "$line"|awk '{print $2}')
-
 				netraw=$(eval $qm_command guest cmd $id network-get-interfaces) 2>/dev/null
-				net=$(echo "$netraw"|jq -r '.[]|select( ."hardware-address" != null )|{(."hardware-address"):[.["ip-addresses"]|.[]|."ip-address"]}|to_entries[] | [.key] + (.value[]|[.]) | @csv' 2>/dev/null|tr -d '"'|grep --color=never ",$network_filter")
-				if [ ! -z "$net" ];then
-					mac=$(echo "$net"|head -n1|awk -F',' '{print $1}')
-					ip=$(echo "$net"|tail -n1|awk -F',' '{print $2}')
+				if [ ! -z "$netraw" ];then
+					net=$(echo "$netraw"|jq -r '.[]|select( ."hardware-address" != null )|select ( .["ip-addresses"] != null)|{(."hardware-address"):[.["ip-addresses"]|.[]|."ip-address"]}|to_entries[] | [.key] + (.value[]|[.]) | @csv' 2>/dev/null|tr -d '"'|grep --color=never ",$network_filter")
+					if [ ! -z "$net" ];then
+						mac=$(echo "$net"|tail -n1|awk -F',' '{print $1}')
+						ip=$(echo "$net"|tail -n1|awk -F',' '{print $2}')
+					else
+						mac=
+						ip=
+					fi
 				fi
-				mac=${mac:-UNKNOWN}
-				ip=${ip:-UNKNOWN}
+				mac=${mac:-NOTFOUND}
+				ip=${ip:-NOTFOUND}
 
 				hostinfo=$(eval $qm_command guest cmd $id get-osinfo 2>/dev/null)
 				os=$(echo "$hostinfo"|grep --color=never '"id"'|awk -F'"' '{print $4}')
