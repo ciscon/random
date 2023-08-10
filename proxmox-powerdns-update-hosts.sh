@@ -1,6 +1,7 @@
 #!/bin/bash
 
 domain="office.domain.com"
+ttl=3600
 network_filter="10.10.10"
 powerdnsurl="http://ns1.domain.com:8081"
 port="8081"
@@ -37,6 +38,6 @@ for line in $vms;do
 		continue
 	fi
 
-	curl -q -H 'Content-Type: application/json' -X PATCH --data '{"rrsets": [ {"name": "'${name}'.'${domain}'.", "type": "A", "ttl": 86400, "changetype": "REPLACE", "records": [ {"content": "'${ip}'", "disabled": false } ] } ] }' -H 'X-API-Key: 5c4f3a5e-4dd3-4f3e-89a2-95796c16542b' ${powerdnsurl}/api/v1/servers/localhost/zones/${domain}
+	curl -q -H 'Content-Type: application/json' -X PATCH --data '{"rrsets": [ {"name": "'${name}'.'${domain}'.", "type": "A", "ttl": '${ttl}', "changetype": "REPLACE", "records": [ {"content": "'${ip}'", "disabled": false } ] } ] }' -H 'X-API-Key: 5c4f3a5e-4dd3-4f3e-89a2-95796c16542b' ${powerdnsurl}/api/v1/servers/localhost/zones/${domain}
 
 done
