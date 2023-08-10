@@ -38,6 +38,6 @@ for line in $vms;do
 		continue
 	fi
 
-	curl -q -H 'Content-Type: application/json' -X PATCH --data '{"rrsets": [ {"name": "'${name}'.'${domain}'.", "type": "A", "ttl": '${ttl}', "changetype": "REPLACE", "records": [ {"content": "'${ip}'", "disabled": false } ] } ] }' -H 'X-API-Key: 5c4f3a5e-4dd3-4f3e-89a2-95796c16542b' ${powerdnsurl}/api/v1/servers/localhost/zones/${domain}
+	curl -s -H 'Content-Type: application/json' -X PATCH --data '{"rrsets": [ {"name": "'${name}'.'${domain}'.", "type": "A", "ttl": '${ttl}', "changetype": "REPLACE", "records": [ {"content": "'${ip}'", "disabled": false } ] } ] }' -H 'X-API-Key: 5c4f3a5e-4dd3-4f3e-89a2-95796c16542b' ${powerdnsurl}/api/v1/servers/localhost/zones/${domain}
 
 done
