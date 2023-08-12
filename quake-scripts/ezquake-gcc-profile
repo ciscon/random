@@ -1,10 +1,10 @@
 #!/bin/bash -e
 
-quaketestcommand="+timedemo demos/fps4"
+quaketestcommand="+volume .01 +timedemo demos/fps4"
 quakedir="$HOME/games/quake"
 gitdir="/home/git/ezquake-source-official"
-optimizations="-march=native -O3 -pipe  -flto=$(nproc) -flto-partition=balanced -ftree-slp-vectorize -ffp-contract=fast -fno-defer-pop -finline-limit=64 -fmerge-all-constants"
-gccver="12"
+optimizations="-march=native -O3 -pipe  -flto=$(nproc)"
+gccver="13"
 profiledir="/tmp/ezquakeprofile"
 
 if [ ! -e "$quakedir/id1/pak0.pak" ];then
