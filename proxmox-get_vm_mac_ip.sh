@@ -31,6 +31,8 @@ for i in $hosts;do
 			IFS=$'\n'
 
 			for line in $vms;do
+				mac=
+				ip=
 				id=$(echo "$line"|awk '{print $1}')
 				name=$(echo "$line"|awk '{print $2}')
 				netraw=$(eval $qm_command guest cmd $id network-get-interfaces) 2>/dev/null
@@ -39,9 +41,6 @@ for i in $hosts;do
 					if [ ! -z "$net" ];then
 						mac=$(echo "$net"|tail -n1|awk -F',' '{print $1}')
 						ip=$(echo "$net"|tail -n1|awk -F',' '{print $2}')
-					else
-						mac=
-						ip=
 					fi
 				fi
 				mac=${mac:-NOTFOUND}
