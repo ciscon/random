@@ -14,7 +14,7 @@ export mesa_glthread=false
 #generic
 preload_library="libtcmalloc_minimal.so.4"
 if ldconfig -p |grep --color=never $preload_library -c >/dev/null 2>&1;then
-	export LD_PRELOAD="$preload_library"
+	export LD_PRELOAD="$preload_library "
 else
 	echo "warning $preload_library not found"
 fi
