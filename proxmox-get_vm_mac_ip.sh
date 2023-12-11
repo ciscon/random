@@ -43,6 +43,9 @@ for i in $hosts;do
 						ip=$(echo "$net"|tail -n1|awk -F',' '{print $2}')
 					fi
 				fi
+				if [ -z $mac ] || [ -z $ip ];then
+					echo "no ip or mac for $name" 1>&2
+				fi
 				mac=${mac:-NOTFOUND}
 				ip=${ip:-NOTFOUND}
 
