@@ -5,19 +5,31 @@
 $types="4v4 2v2";
 $minplayers=1;
 $interval=10;
-
+$source="hub"; //badplace or hub
 
 $oldservers=array();
+
+$types=preg_replace("/[^0-9 ]/", '', $types);
 while (1) {
-  if (!$list=json_decode(file_get_contents("https://badplace.eu/api/v2/serverbrowser/busy"))) continue;
   $servers=array();
-  foreach ($list as $item) foreach (explode(' ',$types) as $type){
-    if ((substr($item->Description,0,strlen($type)) == $type)){
-      $count=0;
-      foreach ($item->Players as $player){
-        if (!$player->Spec) $count++;	
+  if ($source == "badplace") {
+    if (!$list=json_decode(file_get_contents("https://badplace.eu/api/v2/serverbrowser/busy"))) continue;
+    foreach ($list as $item) foreach (explode(' ',$types) as $type){
+      if ((substr(preg_replace("/[^0-9 ]/", '', $item->Description),0,strlen($type)) == $type)){
+        $count=0;
+        foreach ($item->Players as $player){
+          if (!$player->Spec) $count++;	
+        }
+        if ($count >= $minplayers) $servers[]=$item->Description.': '.$item->Address. ' ('.$count.')';
       }
-      if ($count >= $minplayers) $servers[]=$type .': '.$item->Address. ' ('.$count.')';
+    }
+  } else {
+    if (!$list=json_decode(file_get_contents("https://hubapi.quakeworld.nu/v2/servers/mvdsv"))) continue;
+    foreach ($list as $item) foreach (explode(' ',$types) as $type){
+      if ((substr(preg_replace('/[^0-9 ]/', '', $item->mode),0,strlen($type)) == $type)){
+        $count=$item->player_slots->used;
+        if ($count >= $minplayers) $servers[]=$item->mode.': '.$item->address. ' ('.$count.')';
+      }
     }
   }
   if (count($servers) && $oldservers !== $servers){
