@@ -3,6 +3,7 @@ RUN bash -c "sed -i 's/deb$/deb deb-src/g' /etc/apt/sources.list.d/*"
 RUN apt update && \
     apt build-dep -y mesa && \
     apt install -y \
+    libxdamage-dev \
     git \
     xserver-xorg xserver-xorg-legacy x11-xserver-utils \
     xinit \
