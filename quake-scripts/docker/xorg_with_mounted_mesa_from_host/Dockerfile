@@ -5,6 +5,7 @@ RUN apt update && \
     apt install -y \
     libxdamage-dev \
     git \
+    curl \
     xserver-xorg xserver-xorg-legacy x11-xserver-utils \
     xinit \
     fuse \
@@ -25,6 +26,8 @@ RUN chmod +x /init.sh
 #build mesa
 RUN mkdir -p /build
 RUN chmod 1777 /build
+
+RUN chmod 777 /usr/local -Rf
 
 USER quakeuser
 WORKDIR /home/quakeuser
