@@ -352,7 +352,7 @@ $("button").prop("disabled",false);
 </center></div>
 
 <div><center><div class=light>
-<font color=black>Note: After uploading a map users should just have to reconnect to download new map aliases, if they do not, maps they vote for (eg /ultrav) will be the wrong map.  If all else fails or the server gets into a broken state for some other reason, just stop and start the server.</font>
+<font color=black>Note: After uploading a map, vote another map and then users should just have to reconnect to download new map aliases, or one can use /votemap newmapname.  If all else fails or the server gets into a broken state for some other reason, just stop and start the server.</font>
 </center></div>
 </div>';
 
