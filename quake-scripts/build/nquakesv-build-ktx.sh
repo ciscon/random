@@ -19,7 +19,7 @@ export CFLAGS+=" -march=native "
 nquakesv_home="$HOME/nquakesv"
 
 #check current remote revision
-remotehead=$(git ls-remote "$gitrepo" HEAD|head -1|awk '{print $1}'|cut -c1-6)
+remotehead=$(git ls-remote "$gitrepo" $gitbranch|head -1|awk '{print $1}'|cut -c1-6)
 
 if [ -z "$remotehead" ];then
   echo "couldn't retrieve remote head"
