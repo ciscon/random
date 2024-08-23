@@ -6,10 +6,11 @@ gitbranch="master"
 
 deps="git pkill quakestat make gcc pkg-config cmake"
 for dep in $deps;do
-       if ! hash $dep >/dev/null 2>&1;then
-               echo "missing dep $dep, bailing out."
-               exit 1
-       fi
+	if ! hash $dep >/dev/null 2>&1;then
+		echo "missing dep $dep, bailing out."
+		echo "try: apt-file search $dep"
+		exit 1
+	fi
 done
 
 #where our custom cflags/ldflags exists
@@ -22,19 +23,19 @@ nquakesv_home="$HOME/nquakesv"
 remotehead=$(git ls-remote "$gitrepo" $gitbranch|head -1|awk '{print $1}'|cut -c1-6)
 
 if [ -z "$remotehead" ];then
-  echo "couldn't retrieve remote head"
-  exit 1
+	echo "couldn't retrieve remote head"
+	exit 1
 fi
 
 if [ "$force" != "1" ];then
-  #check whether or not we need to proceed
-  for bin in "${nquakesv_home}/ktx/"qwprogs-*-??????.so;do
-    temprev=$(echo "$bin"|awk -F'[.-]' '{print $(NF-1)}')
-    if [ "$temprev" = "$remotehead" ];then
-      echo "revision already built, exiting."
-      exit 0
-    fi
-  done
+	#check whether or not we need to proceed
+	for bin in "${nquakesv_home}/ktx/"qwprogs-*-??????.so;do
+		temprev=$(echo "$bin"|awk -F'[.-]' '{print $(NF-1)}')
+		if [ "$temprev" = "$remotehead" ];then
+			echo "revision already built, exiting."
+			exit 0
+		fi
+	done
 fi
 
 if [ ! -d "$nquakesv_home/build/ktx" ];then
