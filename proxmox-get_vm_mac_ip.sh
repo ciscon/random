@@ -2,7 +2,7 @@
 # ssh to proxmox hosts and retrieve mac/ip addresses for all vms
 
 #network filter to grab the correct address from vm config
-network_filter="10."
+network_filter="10.10.10."
 
 #vm hosts
 hosts="
