@@ -10,6 +10,6 @@ else
 fi
 
 npx @puppeteer/browsers --path="$browser_path" install chrome@${version}
-browser=$(ls "$browser_path/chrome/"*"-${version}"*"/chrome-"*"/chrome"|head -n1)
+browser=$(ls "$browser_path/chrome/"*"-${version}"*"/chrome-"*"/chrome"|tail -n1)
 ln -sf "$browser" "$HOME/Desktop/chrome-${version}"
 "$browser"

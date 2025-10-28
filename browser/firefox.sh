@@ -10,6 +10,6 @@ else
 fi
 
 npx @puppeteer/browsers --path="$browser_path" install firefox@stable_${version}
-browser=$(ls "$browser_path/firefox/"*"-stable_${version}"*"/firefox/firefox"|head -n1)
+browser=$(ls "$browser_path/firefox/"*"-stable_${version}"*"/firefox/firefox"|tail -n1)
 ln -sf "$browser" "$HOME/Desktop/firefox-${version}"
 "$browser"
