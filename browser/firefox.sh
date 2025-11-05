@@ -11,5 +11,7 @@ fi
 
 npx @puppeteer/browsers --path="$browser_path" install firefox@stable_${version}
 browser=$(ls "$browser_path/firefox/"*"-stable_${version}"*"/firefox/firefox"|tail -n1)
+browser_installed_dir=$(dirname "${browser}")
+echo disabled > "${browser_installed_dir}/update-settings.ini"
 ln -sf "$browser" "$HOME/Desktop/firefox-${version}"
 "$browser"
