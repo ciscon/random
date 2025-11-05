@@ -17,7 +17,7 @@ set PWS=powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive -NoProfil
 
 %PWS% -Command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut(%SHORTCUT%); $S.TargetPath = %TARGET%; $S.Save()"
 
-echo disabled >> "c:\browsertemp\firefox\win64-stable_%version%\core\update-settings.ini"
+echo disabled > "c:\browsertemp\firefox\win64-stable_%version%\core\update-settings.ini"
 
 "c:\browsertemp\firefox\win64-stable_%version%\core\firefox.exe"
 
