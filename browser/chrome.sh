@@ -10,6 +10,10 @@ else
 fi
 
 npx @puppeteer/browsers --path="$browser_path" install chrome@${version}
-browser=$(ls "$browser_path/chrome/"*"-${version}"*"/chrome-"*"/chrome"|tail -n1)
+if [[ "$(uname)" == *"inux" ]];then
+	browser=$(ls "$browser_path/chrome/"*"-${version}"*"/chrome-"*"/chrome"|tail -n1)
+else
+	browser=$(ls "$browser_path/chrome/mac_"*"-${version}"*"/chrome-"*"/Google Chrome "*".app/Contents/MacOS/Google Chrome"*|tail -n1)
+fi
 ln -sf "$browser" "$HOME/Desktop/chrome-${version}"
 "$browser"
