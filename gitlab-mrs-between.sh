@@ -1,6 +1,8 @@
 #!/bin/bash
 
 #example output parsing: parse output into relevent fields example: jq '.[] | {iid, web_url, title, description}'
+	#csv output: jq 'reduce inputs as $in (.; . + $in)|.[]|{iid, web_url, title}'|jq -sr '(map(keys) | add | unique) as $cols | map(. as $row | $cols | map($row[. // empty])) as $rows | $cols, $rows[] | @csv'
+
 
 gitlab_token=""
 gitlab_url="https://gitlab.example.com/api/v4/projects/2"
