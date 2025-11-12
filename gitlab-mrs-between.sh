@@ -19,8 +19,8 @@ tempdir="/tmp/gitlabmrs-output"
 
 #doing it with gitlab api
 gitoutput=$(
-	curl -s -H "Content-Type: application/json" -H "PRIVATE-TOKEN: ${gitlab_token}" -L "${gitlab_url}/repository/compare?straight=false&from=${1}&to=${2}"| \
-		jq '.commits[]|select(.parent_ids|length > 1)|.title'| \
+	curl --compressed -s -H "Content-Type: application/json" -H "PRIVATE-TOKEN: ${gitlab_token}" -L "${gitlab_url}/repository/compare?from=${1}&to=${2}"| \
+		jq -r '[.commits[] | select(.parent_ids|length > 1)  ]|sort_by(.created_at)|.[]|.title' | \
 		grep "Merge branch '.*' into"|grep -v -e "remote-tracking branch" -e "'release'.*into" -e "'staging'.*into" -e "'dev'.*into" -e "into .*fortify" | \
 		sed "s/Merge branch '\([^']\+\)'.*/\1/g"|tr -d '"'|sort -u
 )
@@ -30,27 +30,21 @@ if [ -z "$gitoutput" ];then
 	exit 1
 fi
 
-#clean up temp dir
-if [ -d "$tempdir" ];then
-	rm -rf "$tempdir"
-fi
-mkdir -p "$tempdir"
-
+urls=""
 for i in $gitoutput;do
-	(
-		if [ -z "$i" ];then
-			continue
-		fi
-		filter="source_branch=$i"
-		output=$(curl -s -H "Content-Type: application/json" -H "PRIVATE-TOKEN: ${gitlab_token}" -L "${gitlab_url}/merge_requests?${filter}" 2>/dev/null)
-
-		if [ ! -z "$output" ];then
-			echo "$output" > "${tempdir}/${i}.json"
-		fi
-	)&
+	if [ -z "$i" ];then
+		continue
+	fi
+	filter="source_branch=$i"
+	urls+=" ${gitlab_url}/merge_requests?${filter}"
 done
 
-wait
+output=$(curl --compressed -s -H "Content-Type: application/json" -H "PRIVATE-TOKEN: ${gitlab_token}" -L --parallel -parallel-immediate --parallel-max=20 $urls) 2>/dev/null
+
+if [ -z "$output" ];then
+	echo "no output."
+	exit 2
+fi
 
 #combine output into single json
-cat "${tempdir}/"*.json|jq 'reduce inputs as $in (.; . + $in)'
+echo "$output"|jq 'reduce inputs as $in (.; . + $in)'

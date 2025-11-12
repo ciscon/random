@@ -13,7 +13,7 @@ crontab -l > $HOME/backup/user.crontab
 sudo chmod g+rX $HOME/backup -R
 
 #create package list
-dpkg-query -f '${binary:Package}\n' -W > $HOME/package.list
+dpkg -l|grep "^ii"|awk '{print $2}' > $HOME/package.list
 #restore: sudo xargs -a $HOME/package.list apt install
 
 borg init --encryption=none /mnt/nas-backup/herpes10

@@ -3,7 +3,7 @@ Type=Application
 Name=Deluge Magnet Links
 GenericName=Deluge Magnet Links
 Comment=Add magnet links via curl
-Exec=/home/git/random/deluge-curl/deluge-addtorrent.sh %U
+Exec=deluge-addtorrent.sh %U
 MimeType=application/x-bittorrent;x-scheme-handler/magnet;
 
 #symlink file to $HOME/.local/share/applications/
