@@ -11,8 +11,6 @@ if [ -z $1 ] || [ -z $2 ];then
 	exit 0
 fi
 
-tempdir="/tmp/gitlabmrs-output"
-
 #doing it with the repository
 #export GIT_DIR=/home/git/sitscape/dev_lamp/.git
 #gitoutput=$(git log --merges --pretty=format:"%s" ${1}..${2}|grep "Merge branch '.*' into"|grep -v -e "remote-tracking branch" -e "'release'.*into" -e "'staging'.*into" -e "'dev'.*into" -e "into .*fortify" |sed "s/Merge branch '\([^']\+\)'.*/\1/g"|sort -u)
@@ -39,12 +37,12 @@ for i in $gitoutput;do
 	urls+=" ${gitlab_url}/merge_requests?${filter}"
 done
 
-output=$(curl --compressed -s -H "Content-Type: application/json" -H "PRIVATE-TOKEN: ${gitlab_token}" -L --parallel -parallel-immediate --parallel-max=20 $urls) 2>/dev/null
+output=$(curl --compressed -s -H "Content-Type: application/json" -H "PRIVATE-TOKEN: ${gitlab_token}" -L --parallel -parallel-immediate --parallel-max 20 $urls) 2>/dev/null
 
 if [ -z "$output" ];then
 	echo "no output."
 	exit 2
 fi
 
-#combine output into single json
+#generate proper json output
 echo "$output"|jq 'reduce inputs as $in (.; . + $in)'
