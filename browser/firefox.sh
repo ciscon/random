@@ -9,6 +9,12 @@ else
 	version=$1
 fi
 
+policy_json='{
+  "policies": {
+    "DisableAppUpdate": true
+  }
+}'
+
 npx @puppeteer/browsers --path="$browser_path" install firefox@stable_${version}
 if [[ "$(uname)" == *"inux" ]];then
 	browser=$(ls "$browser_path/firefox/"*"-stable_${version}"*"/firefox/firefox"|tail -n1)
@@ -17,5 +23,7 @@ else
 fi
 browser_installed_dir=$(dirname "${browser}")
 echo disabled > "${browser_installed_dir}/update-settings.ini"
+mkdir -p "${browser_installed_dir}/distribution"
+echo "$policy_json" > "${browser_installed_dir}/distribution/policies.json"
 ln -sf "$browser" "$HOME/Desktop/firefox-${version}"
 "$browser"
