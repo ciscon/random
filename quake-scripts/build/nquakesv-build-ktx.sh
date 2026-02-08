@@ -31,7 +31,7 @@ function check_deps() {
 check_deps
 if [ $? -ne 0 ];then
 	if hash apt-get 2>/dev/null;then
-		echo "attempting to install necessary programs sudo apt-get..."
+		echo "attempting to install necessary programs via sudo apt-get..."
 		sudo apt-get -qy install git procps qstat make gcc pkg-config cmake
 		check_deps
 		if [ $? -ne 0 ];then
