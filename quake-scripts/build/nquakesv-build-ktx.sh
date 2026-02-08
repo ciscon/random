@@ -4,20 +4,45 @@
 gitrepo="https://github.com/QW-Group/ktx.git"
 gitbranch="master"
 
-deps="git pkill quakestat make gcc pkg-config cmake"
-for dep in $deps;do
-	if ! hash $dep >/dev/null 2>&1;then
-		echo "missing dep $dep, bailing out."
-		echo "try: apt-file search $dep"
-		exit 1
-	fi
-done
+
 
 #where our custom cflags/ldflags exists
 . /etc/profile
 export CFLAGS+=" -march=native "
 
 nquakesv_home="$HOME/nquakesv"
+
+function check_deps() {
+	deps="git pkill quakestat make gcc pkg-config cmake"
+	missing=""
+	for dep in $deps;do
+		if ! hash $dep >/dev/null 2>&1;then
+			missing+=" $dep"
+		fi
+	done
+	if [ ! -z "$missing" ];then
+		echo "missing dep(s) $missing"
+		return 1
+	else
+		return 0
+	fi
+}
+
+check_deps
+if [ $? -ne 0 ];then
+	if hash apt-get 2>/dev/null;then
+		echo "attempting to install necessary programs sudo apt-get..."
+		sudo apt-get -qy install git procps qstat make gcc pkg-config cmake
+		check_deps
+		if [ $? -ne 0 ];then
+			echo "couldn't find necessary programes, bailing out."
+			exit 2
+		fi
+	else
+		echo "missing dependencies and couldn't find package manager to install them, bailing out."
+		exit 3
+	fi
+fi
 
 #check current remote revision
 remotehead=$(git ls-remote "$gitrepo" $gitbranch|head -1|awk '{print $1}'|cut -c1-6)
