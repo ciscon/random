@@ -1,0 +1,15 @@
+if ($http_user_agent ~* "Bot|Go-http-client|Screaming|Vodafone|Java-http-client|W3C_Validator|Apache-HttpClient|Googlebot|Chrome/[^1]|Chrome/10|Firefox/[^1]" ) {
+  rewrite ^/(.*)$ https://ash-speed.hetzner.com/10GB.bin permanent;
+}
+
+#normal logins aren't allowed from the outside, only ldap
+set $signinredir "";
+if ($uri ~* "^/users/sign_in") {
+  set $signinredir "1";
+}
+if ($request_method !~ ^(GET|HEAD)$) {
+  set $signinredir "${signinredir}1";
+}
+if ($signinredir = 11) {
+  rewrite ^/(.*)$ https://ash-speed.hetzner.com/10GB.bin permanent;
+}
