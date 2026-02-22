@@ -30,7 +30,7 @@ $viewonly=true;
 if ($_SERVER['PHP_AUTH_USER'] === $admin_user){
 	$viewonly=false;
 }else{
-	if ($_GET['action'] && $_GET['action'] !== 'status'&& $_GET['action'] !== 'getlog'){
+	if (isset($_GET['action']) && $_GET['action'] !== 'status'&& $_GET['action'] !== 'getlog'){
 		$_GET['action']=null;
 	}
 	$_FILES=null;
@@ -88,8 +88,7 @@ function showlog(){
 $_user=$_SERVER['HTTP_X_REAL_IP'] ? $_SERVER['HTTP_X_REAL_IP'] : $_SERVER['HTTP_X_CLIENT_IP'];
 $_date=date('m/d/y H:i:s', time());
 
-if ($_FILES["file"]["name"]){
-
+if (is_array($_FILES) && isset($_FILES["file"]) && isset($_FILES["file"]["name"])){
 	$_action='uploaded file: '.$_FILES["file"]["name"];
 
 	$target_file = $quakedir."/qw/maps/". basename($_FILES["file"]["name"]);
@@ -97,10 +96,10 @@ if ($_FILES["file"]["name"]){
 	$filetype = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
 	$_status = 'unknown';
 
-	if($filetype !== 'bsp') {
+	if($filetype !== 'bsp' && $filetype !== 'ent') {
 		$uploadOk = 0;
-		$_status = 'file not a bsp';
-		echo "File not a bsp.\n";
+		$_status = 'file not a bsp or ent';
+		echo "File not a bsp or ent.\n";
 	} else {
 		$_status = 'file uploaded';
 		$uploadOk = 1;
@@ -120,7 +119,10 @@ if ($_FILES["file"]["name"]){
 	} else {
 		if (move_uploaded_file($_FILES["file"]["tmp_name"], $target_file)) {
 			echo "The file ". basename( $_FILES["file"]["name"]). " has been uploaded.\n";
-			exec('bsputil --check "'.$target_file.'" 2>&1',$output,$status);
+			$status=0;
+			if ($filetype == 'bsp') {
+				exec('/opt/bin/bsputil --check "'.$target_file.'" 2>&1',$output,$status);
+			}
 			if ($status != 0){
 				$_status = 'file uploaded and moved to map directory, but there were bsputil errors';
 				echo "\nBSP Invalid!\n";
@@ -143,12 +145,12 @@ if ($_FILES["file"]["name"]){
 }
 
 
-if ($_GET['action']){
+if (isset($_GET['action'])){
 
 	$action=$_GET['action'];
 	$_action='action: '.$action;
 	$_status='none';
-	$_port=(int)$_GET['port'];
+	$_port=isset($_GET['port']) ? (int)$_GET['port'] : null;
 	$nolog=false;
 
 	if ($_action === 'action: getlog') { showlog(); exit(0); }
